@@ -1,0 +1,43 @@
+/* Front-End Styles */
+
+/* Document Wrapper */
+.sdms-document {
+    margin: 20px;
+}
+
+/* Document Title */
+.sdms-document h1 {
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+/* File Type Icon */
+.sdms-file-type-icon {
+    vertical-align: middle;
+    margin-right: 10px;
+    width: 50px;
+    height: auto;
+}
+
+/* Document Content */
+.sdms-content {
+    margin-bottom: 20px;
+}
+
+/* Download Links */
+.sdms-download-links h2 {
+    margin-top: 30px;
+}
+.sdms-download-links ul {
+    list-style: none;
+    padding: 0;
+}
+.sdms-download-links li {
+    margin-bottom: 10px;
+}
+.sdms-download-links img {
+    vertical-align: middle;
+    margin-right: 5px;
+    width: 20px;
+    height: auto;
+}

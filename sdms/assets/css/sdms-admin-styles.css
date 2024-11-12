@@ -1,0 +1,48 @@
+/* Admin Styles */
+
+/* File Type Image Options */
+.sdms-file-type-image-options {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+.sdms-file-type-image-options label {
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid lightgray;
+    border-radius: 10px;
+}
+.sdms-file-type-image-options label img {
+    margin: 10px auto;
+}
+
+/* Admin Wrapper */
+.sdms-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-content: flex-start;
+}
+
+/* Language Files Table */
+.sdms-language-files-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+.sdms-language-files-table th,
+.sdms-language-files-table td {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    vertical-align: middle;
+}
+.sdms-language-files-table th {
+    background-color: #f9f9f9;
+}
+.sdms-language-files-table button {
+    margin: 5px 0;
+}
+.sdms-language-files-table a {
+    text-decoration: none;
+}

@@ -1,0 +1,102 @@
+[
+    {
+        "country": "France",
+        "code": "fr",
+        "flag": "https://flagcdn.com/w20/fr.png"
+    },
+    {
+        "country": "United Kingdom",
+        "code": "en",
+        "flag": "https://flagcdn.com/w20/gb.png"
+    },
+    {
+        "country": "Spain",
+        "code": "es",
+        "flag": "https://flagcdn.com/w20/es.png"
+    },
+    {
+        "country": "Germany",
+        "code": "de",
+        "flag": "https://flagcdn.com/w20/de.png"
+    },
+    {
+        "country": "Italy",
+        "code": "it",
+        "flag": "https://flagcdn.com/w20/it.png"
+    },
+    {
+        "country": "Japan",
+        "code": "ja",
+        "flag": "https://flagcdn.com/w20/jp.png"
+    },
+    {
+        "country": "China",
+        "code": "zh",
+        "flag": "https://flagcdn.com/w20/cn.png"
+    },
+    {
+        "country": "Russia",
+        "code": "ru",
+        "flag": "https://flagcdn.com/w20/ru.png"
+    },
+    {
+        "country": "Brazil",
+        "code": "pt",
+        "flag": "https://flagcdn.com/w20/br.png"
+    },
+    {
+        "country": "India",
+        "code": "hi",
+        "flag": "https://flagcdn.com/w20/in.png"
+    },
+    {
+        "country": "Canada",
+        "code": "ca",
+        "flag": "https://flagcdn.com/w20/ca.png"
+    },
+    {
+        "country": "Australia",
+        "code": "au",
+        "flag": "https://flagcdn.com/w20/au.png"
+    },
+    {
+        "country": "Netherlands",
+        "code": "nl",
+        "flag": "https://flagcdn.com/w20/nl.png"
+    },
+    {
+        "country": "Sweden",
+        "code": "sv",
+        "flag": "https://flagcdn.com/w20/se.png"
+    },
+    {
+        "country": "Norway",
+        "code": "no",
+        "flag": "https://flagcdn.com/w20/no.png"
+    },
+    {
+        "country": "Denmark",
+        "code": "da",
+        "flag": "https://flagcdn.com/w20/dk.png"
+    },
+    {
+        "country": "Finland",
+        "code": "fi",
+        "flag": "https://flagcdn.com/w20/fi.png"
+    },
+    {
+        "country": "Poland",
+        "code": "pl",
+        "flag": "https://flagcdn.com/w20/pl.png"
+    },
+    {
+        "country": "Turkey",
+        "code": "tr",
+        "flag": "https://flagcdn.com/w20/tr.png"
+    },
+    {
+        "country": "South Korea",
+        "code": "ko",
+        "flag": "https://flagcdn.com/w20/kr.png"
+    }
+]
