@@ -16,6 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define plugin constants for directory and URL paths
 define( 'sdms_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'sdms_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'sdms_LANGUAGES_FILE', sdms_PLUGIN_DIR . 'languages.json' );
 
 // Include necessary class files
 require_once sdms_PLUGIN_DIR . 'includes/class-sdms-cpt.php';
@@ -24,6 +25,7 @@ require_once sdms_PLUGIN_DIR . 'includes/class-sdms-frontend.php';
 require_once sdms_PLUGIN_DIR . 'includes/class-sdms-custom-fields.php';
 require_once sdms_PLUGIN_DIR . 'includes/class-sdms-settings.php';
 require_once sdms_PLUGIN_DIR . 'includes/class-sdms-shortcodes.php';
+require_once sdms_PLUGIN_DIR . 'includes/sdms-functions.php';
 
 // Initialize plugin classes
 function sdms_init() {
@@ -41,7 +43,7 @@ add_action( 'plugins_loaded', 'sdms_init' );
  */
 function sdms_activate() {
     // Load languages from JSON file
-    $json_file = sdms_PLUGIN_DIR . 'languages.json';
+    $json_file = sdms_LANGUAGES_FILE;
     $available_languages = array();
 
     if ( file_exists( $json_file ) ) {
@@ -54,9 +56,8 @@ function sdms_activate() {
     foreach ( $available_languages as $language ) {
         if ( isset( $language['code'] ) && $language['code'] === 'en' ) {
             $default_language['en'] = array(
-                'country'     => sanitize_text_field( $language['country'] ),
-                'flag'        => esc_url_raw( $language['flag'] ),
-                'custom_flag' => '',
+                'lang' => sanitize_text_field( $language['lang'] ),
+                'flag'    => esc_url_raw( $language['flag'] ),
             );
             break;
         }
@@ -65,9 +66,8 @@ function sdms_activate() {
     // If the English language is not found, use a fallback
     if ( empty( $default_language ) ) {
         $default_language['en'] = array(
-            'country'     => 'United Kingdom',
-            'flag'        => 'https://flagcdn.com/w20/gb.png', // Default flag URL
-            'custom_flag' => '',
+            'lang' => 'United Kingdom',
+            'flag'    => 'https://flagcdn.com/w20/gb.png', // Default flag URL
         );
     }
 

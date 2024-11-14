@@ -83,16 +83,14 @@ class sdms_Shortcodes {
 
                     // Determine the flag URL
                     $flag_url = '';
-                    if ( isset( $language['custom_flag'] ) && ! empty( $language['custom_flag'] ) ) {
-                        $flag_url = $language['custom_flag'];
-                    } elseif ( ! empty( $language['flag'] ) ) {
+                    if ( ! empty( $language['flag'] ) ) {
                         $flag_url = $language['flag'];
                     }
 
                     // Build the output
                     if ( ! empty( $flag_url ) ) {
                         $output .= '<a href="' . esc_url( $download_url ) . '" target="_blank">';
-                        $output .= '<img src="' . esc_url( $flag_url ) . '" alt="' . esc_attr( $language['country'] ) . ' flag" class="sdms-flag-icon" />';
+                        $output .= '<img src="' . esc_url( $flag_url ) . '" alt="' . esc_attr( $language['lang'] ) . ' flag" class="sdms-flag-icon" />';
                         $output .= '</a> ';
                     }
                 }

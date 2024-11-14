@@ -34,7 +34,7 @@ get_header();
                     $file_id = get_post_meta( get_the_ID(), 'sdms_file_' . $code, true );
                     if ( $file_id ) {
                         $download_url = trailingslashit( get_permalink() ) . 'download/' . $code;
-                        $language_name = $language['country'];
+                        $language_name = $language['lang'];
                         echo '<a href="' . esc_url( $download_url ) . '" class="sdms-download-button">' . sprintf( __( 'Télécharger (%s)', 'sdms' ), esc_html( $language_name ) ) . '</a>';
                     }
                 }

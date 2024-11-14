@@ -50,3 +50,197 @@
     width: 20px;
     height: auto;
 }
+
+/* Styles de la modale */
+#sdms-send-document-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.sdms-modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    position: relative;
+}
+
+.sdms-close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    right: 15px;
+    top: 10px;
+    cursor: pointer;
+}
+
+.sdms-close-modal:hover,
+.sdms-close-modal:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#sdms-send-document-form input[type="email"],
+#sdms-send-document-form input[type="submit"] {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+}
+
+#sdms-send-document-message {
+    margin-top: 10px;
+}
+
+.sdms-send-document-button {
+    padding: 5px 10px;
+    background-color: #0073aa;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.sdms-send-document-button:hover {
+    background-color: #005177;
+}
+
+
+/* Conteneur des cartes */
+.sdms-document-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+/* Style de chaque carte */
+.sdms-document-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: calc(16% - 10px); /* Pour afficher environ 6 cartes par ligne avec des marges */
+    margin: 5px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Ajustement pour 5 cartes par ligne si nécessaire */
+@media screen and (max-width: 1200px) {
+    .sdms-document-card {
+        width: calc(19% - 10px); /* 5 cartes par ligne */
+    }
+}
+
+/* Ajustement pour 4 cartes par ligne sur écrans plus petits */
+@media screen and (max-width: 992px) {
+    .sdms-document-card {
+        width: calc(24% - 10px); /* 4 cartes par ligne */
+    }
+}
+
+/* Ajustement pour 2 cartes par ligne sur mobiles */
+@media screen and (max-width: 600px) {
+    .sdms-document-card {
+        width: calc(48% - 10px); /* 2 cartes par ligne */
+    }
+}
+
+/* Ajustement pour 1 carte par ligne sur écrans très petits */
+@media screen and (max-width: 400px) {
+    .sdms-document-card {
+        width: 100%;
+    }
+}
+
+/* Style du header de la carte */
+.sdms-card-header {
+    padding: 10px;
+    text-align: center;
+    background-color: #f5f5f5;
+}
+
+.sdms-card-header img.sdms-file-type-icon {
+    max-width: 50px;
+    display: block;
+    margin: 0 auto 5px;
+}
+
+.sdms-card-header h2 {
+    font-size: 16px;
+    margin: 5px 0 0;
+}
+
+.sdms-card-header h2 a {
+    text-decoration: none;
+    color: #333;
+}
+
+/* Style du contenu de la carte */
+.sdms-card-content {
+    padding: 10px;
+    flex-grow: 1;
+}
+
+/* Style des métadonnées */
+.sdms-card-meta {
+    padding: 10px;
+    font-size: 12px;
+    color: #666;
+}
+
+.sdms-card-meta p {
+    margin: 5px 0;
+}
+
+/* Style des langues */
+.sdms-card-languages {
+    padding: 10px;
+    text-align: center;
+}
+
+.sdms-language-links img.sdms-flag-icon {
+    width: 24px;
+    height: auto;
+    margin: 0 5px;
+}
+
+/* Style des actions */
+.sdms-card-actions {
+    padding: 10px;
+    text-align: center;
+}
+
+.sdms-send-document-button {
+    padding: 5px 10px;
+    background-color: #0073aa;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.sdms-send-document-button:hover {
+    background-color: #005177;
+}
+
+/* Styles de la modale (comme précédemment) */
+#sdms-send-document-modal {
+    /* ... mêmes styles que précédemment ... */
+}
+
+.sdms-modal-content {
+    /* ... mêmes styles que précédemment ... */
+}
+
+/* ... autres styles de la modale ... */

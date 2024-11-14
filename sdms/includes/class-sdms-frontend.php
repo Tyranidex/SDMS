@@ -30,6 +30,11 @@ class sdms_Frontend {
 
         // Adjust main query
         add_action( 'pre_get_posts', array( $this, 'adjust_sdms_archive_query' ) );
+
+        // Ajax Action for sharing documents
+        add_action( 'wp_ajax_sdms_send_document', array( $this, 'handle_send_document_ajax' ) );
+        add_action( 'wp_ajax_nopriv_sdms_send_document', array( $this, 'handle_send_document_ajax' ) );
+
     }
 
     /**
@@ -50,6 +55,15 @@ class sdms_Frontend {
     public function enqueue_frontend_assets() {
         if ( is_singular( 'sdms_document' ) || is_post_type_archive( 'sdms_document' ) ) {
             wp_enqueue_style( 'sdms-front-styles', sdms_PLUGIN_URL . 'assets/css/sdms-front-styles.css' );
+
+            // Enregistrer le script pour la modale et l'AJAX
+            wp_enqueue_script( 'sdms-front-script', sdms_PLUGIN_URL . 'assets/js/sdms-front-script.js', array( 'jquery' ), '1.0.0', true );
+
+            // Localiser le script pour passer l'URL AJAX et le nonce
+            wp_localize_script( 'sdms-front-script', 'sdmsAjax', array(
+                'ajax_url' => admin_url( 'admin-ajax.php' ),
+                'nonce'    => wp_create_nonce( 'sdms_send_document_nonce' ),
+            ) );
         }
     }
 
@@ -262,5 +276,39 @@ class sdms_Frontend {
             return $posts[0];
         }
         return null;
+    }
+
+    public function handle_send_document_ajax() {
+        // Vérifier le nonce
+        check_ajax_referer( 'sdms_send_document_nonce', 'nonce' );
+
+        // Récupérer les données POST
+        $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+        $recipient_email = isset( $_POST['recipient_email'] ) ? sanitize_email( $_POST['recipient_email'] ) : '';
+
+        // Valider l'email
+        if ( ! is_email( $recipient_email ) ) {
+            wp_send_json_error( array( 'message' => __( 'Adresse email invalide.', 'sdms' ) ) );
+        }
+
+        // Vérifier si le post existe et est du bon type
+        $post = get_post( $post_id );
+        if ( ! $post || $post->post_type != 'sdms_document' ) {
+            wp_send_json_error( array( 'message' => __( 'Document invalide.', 'sdms' ) ) );
+        }
+
+        // Préparer le contenu de l'email
+        $subject = sprintf( __( 'Consultez ce document : %s', 'sdms' ), get_the_title( $post_id ) );
+        $permalink = get_permalink( $post_id );
+        $message = sprintf( __( 'Bonjour,%sVous pourriez être intéressé par ce document : %s%sVous pouvez le consulter ici : %s', 'sdms' ), "\n\n", get_the_title( $post_id ), "\n", $permalink );
+
+        // Envoyer l'email
+        $sent = wp_mail( $recipient_email, $subject, $message );
+
+        if ( $sent ) {
+            wp_send_json_success( array( 'message' => __( 'Email envoyé avec succès.', 'sdms' ) ) );
+        } else {
+            wp_send_json_error( array( 'message' => __( 'Échec de l\'envoi de l\'email. Veuillez réessayer plus tard.', 'sdms' ) ) );
+        }
     }
 }

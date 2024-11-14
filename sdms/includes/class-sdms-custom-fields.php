@@ -48,6 +48,17 @@ class sdms_Custom_Fields {
             $languages = array();
         }
 
+        // Récupérer le type d'icône de drapeau sélectionné
+        $selected_flag_icon_type = get_option( 'sdms_flag_icon_type', 'squared' );
+
+        // Si 'custom' est sélectionné mais que le dossier n'existe pas, revenir à 'squared'
+        if ( $selected_flag_icon_type === 'custom' ) {
+            $custom_flags_dir = get_stylesheet_directory() . '/sdms-flags/';
+            if ( ! ( file_exists( $custom_flags_dir ) && is_dir( $custom_flags_dir ) ) ) {
+                $selected_flag_icon_type = 'squared';
+            }
+        }
+
         // Include the media uploader script
         $this->enqueue_media_script();
 
@@ -55,9 +66,31 @@ class sdms_Custom_Fields {
         echo '<table class="form-table sdms-language-files-table">';
         echo '<thead>';
         echo '<tr>';
-        // Language headers
+        // Language headers with flags
         foreach ( $languages as $code => $language ) {
-            echo '<th>' . esc_html( $language['country'] ) . '</th>';
+            // Déterminer le chemin de l'icône du drapeau
+            if ( $selected_flag_icon_type === 'custom' ) {
+                // Chemin vers le drapeau personnalisé dans le thème
+                $flag_file = get_stylesheet_directory() . '/sdms-flags/' . $code . '.png';
+                $flag_url  = get_stylesheet_directory_uri() . '/sdms-flags/' . $code . '.png';
+                if ( ! file_exists( $flag_file ) ) {
+                    // Si le drapeau personnalisé n'existe pas, utiliser un drapeau par défaut
+                    $flag_url = sdms_PLUGIN_URL . 'assets/images/default-flag.png';
+                }
+            } else {
+                // Chemin vers le drapeau du plugin
+                $flag_file = sdms_PLUGIN_DIR . 'assets/images/flags/' . $selected_flag_icon_type . '/' . $code . '.png';
+                $flag_url  = sdms_PLUGIN_URL . 'assets/images/flags/' . $selected_flag_icon_type . '/' . $code . '.png';
+                if ( ! file_exists( $flag_file ) ) {
+                    // Si le drapeau n'existe pas, utiliser un drapeau par défaut
+                    $flag_url = sdms_PLUGIN_URL . 'assets/images/default-flag.png';
+                }
+            }
+
+            echo '<th>';
+            echo '<img src="' . esc_url( $flag_url ) . '" alt="' . esc_attr( $language['lang'] ) . '" style="vertical-align: middle; max-width: 24px; margin-right: 5px;">';
+            echo esc_html( $language['lang'] );
+            echo '</th>';
         }
         echo '</tr>';
         echo '</thead>';

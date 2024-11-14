@@ -66,9 +66,9 @@ get_header();
                     $file_id = get_post_meta( get_the_ID(), 'sdms_file_' . $code, true );
                     if ( $file_id ) {
                         $download_url = trailingslashit( get_permalink() ) . 'download/' . $code;
-                        $flag_url = ! empty( $language['custom_flag'] ) ? $language['custom_flag'] : $language['flag'];
+                        $flag_url = $language['flag'];
                         echo '<a href="' . esc_url( $download_url ) . '" target="_blank">';
-                        echo '<img src="' . esc_url( $flag_url ) . '" alt="' . esc_attr( $language['country'] ) . '" class="sdms-flag-icon">';
+                        echo '<img src="' . esc_url( $flag_url ) . '" alt="' . esc_attr( $language['lang'] ) . '" class="sdms-flag-icon">';
                         echo '</a>';
                     }
                 }
