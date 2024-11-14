@@ -20,20 +20,35 @@ class sdms_Frontend {
         add_action( 'init', array( $this, 'add_rewrite_rules' ) );
 
         // Load custom template for the 'sdms_document' post type
-        add_action( 'template_include', array( $this, 'load_custom_template' ) );
+        add_filter( 'template_include', array( $this, 'load_custom_template' ) );
 
         // Handle file downloads
         add_action( 'wp', array( $this, 'handle_download' ) );
 
         // Enqueue front-end assets
         add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_frontend_assets' ) );
+
+        // Adjust main query
+        add_action( 'pre_get_posts', array( $this, 'adjust_sdms_archive_query' ) );
+    }
+
+    /**
+     * Adjust the main query for the sdms_document archive page.
+     *
+     * @param WP_Query $query The main query object.
+     */
+    public function adjust_sdms_archive_query( $query ) {
+        if ( ! is_admin() && $query->is_main_query() && is_post_type_archive( 'sdms_document' ) ) {
+            // Set the number of posts per page
+            $query->set( 'posts_per_page', 20 );
+        }
     }
 
     /**
      * Enqueue front-end styles.
      */
     public function enqueue_frontend_assets() {
-        if ( is_singular( 'sdms_document' ) ) {
+        if ( is_singular( 'sdms_document' ) || is_post_type_archive( 'sdms_document' ) ) {
             wp_enqueue_style( 'sdms-front-styles', sdms_PLUGIN_URL . 'assets/css/sdms-front-styles.css' );
         }
     }
@@ -46,21 +61,14 @@ class sdms_Frontend {
      * @return string Modified permalink.
      */
     public function custom_post_link( $post_link, $post ) {
-        if ( $post->post_type !== 'sdms_document' ) {
-            return $post_link;
-        }
-
-        if ( strpos( $post_link, '%sdms_category%' ) !== false ) {
-            $terms = get_the_terms( $post->ID, 'sdms_category' );
-            if ( $terms && ! is_wp_error( $terms ) ) {
-                // Replace the placeholder with the category slug
-                $post_link = str_replace( '%sdms_category%', array_pop( $terms )->slug, $post_link );
+        if ( $post->post_type == 'sdms_document' ) {
+            $terms = wp_get_post_terms( $post->ID, 'sdms_category' );
+            if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
+                $post_link = str_replace( '%sdms_category%', $terms[0]->slug, $post_link );
             } else {
-                // If no category assigned, use 'uncategorized'
                 $post_link = str_replace( '%sdms_category%', 'uncategorized', $post_link );
             }
         }
-
         return $post_link;
     }
 
@@ -127,18 +135,35 @@ class sdms_Frontend {
      * @return string Modified template path.
      */
     public function load_custom_template( $template ) {
-        if ( get_query_var( 'sdms_document' ) ) {
-            $selected_template = get_option( 'sdms_template', 'template-default.php' );
-            $selected_template = sanitize_file_name( $selected_template );
+        // Récupérer les templates sélectionnés dans les options
+        $selected_single_template = get_option( 'sdms_template', 'single-template-default.php' );
+        $selected_archive_template = get_option( 'sdms_archive_template', 'archive-template-default.php' );
 
-            // Paths to template files
-            $theme_template  = get_stylesheet_directory() . '/sdms-templates/' . $selected_template;
-            $plugin_template = sdms_PLUGIN_DIR . 'templates/' . $selected_template;
+        // Sanitize filenames
+        $selected_single_template = sanitize_file_name( $selected_single_template );
+        $selected_archive_template = sanitize_file_name( $selected_archive_template );
 
-            if ( file_exists( $theme_template ) ) {
-                return $theme_template;
-            } elseif ( file_exists( $plugin_template ) ) {
-                return $plugin_template;
+        // Chemins vers les templates
+        $theme_single_template  = get_stylesheet_directory() . '/sdms-templates/' . $selected_single_template;
+        $plugin_single_template = sdms_PLUGIN_DIR . 'templates/' . $selected_single_template;
+
+        $theme_archive_template  = get_stylesheet_directory() . '/sdms-templates/' . $selected_archive_template;
+        $plugin_archive_template = sdms_PLUGIN_DIR . 'templates/' . $selected_archive_template;
+
+        // Vérifier si nous sommes sur un post individuel de sdms_document
+        if ( is_singular( 'sdms_document' ) ) {
+            if ( file_exists( $theme_single_template ) ) {
+                return $theme_single_template;
+            } elseif ( file_exists( $plugin_single_template ) ) {
+                return $plugin_single_template;
+            }
+        }
+        // Vérifier si nous sommes sur la page d'archive de sdms_document
+        elseif ( is_post_type_archive( 'sdms_document' ) ) {
+            if ( file_exists( $theme_archive_template ) ) {
+                return $theme_archive_template;
+            } elseif ( file_exists( $plugin_archive_template ) ) {
+                return $plugin_archive_template;
             }
         }
         return $template;

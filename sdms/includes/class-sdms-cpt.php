@@ -45,12 +45,10 @@ class sdms_CPT {
             'capability_type'    => 'post',
             'hierarchical'       => false,
             'supports'           => array( 'title', 'editor', 'author', 'thumbnail', 'excerpt' ),
-            'has_archive'        => true,
+            'has_archive'        => 'docs',
             'rewrite'            => array(
                 'slug'       => 'docs/%sdms_category%',
                 'with_front' => false,
-                'pages'      => true,
-                'feeds'      => true,
             ),
         );
 

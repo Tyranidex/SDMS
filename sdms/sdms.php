@@ -23,6 +23,7 @@ require_once sdms_PLUGIN_DIR . 'includes/class-sdms-admin.php';
 require_once sdms_PLUGIN_DIR . 'includes/class-sdms-frontend.php';
 require_once sdms_PLUGIN_DIR . 'includes/class-sdms-custom-fields.php';
 require_once sdms_PLUGIN_DIR . 'includes/class-sdms-settings.php';
+require_once sdms_PLUGIN_DIR . 'includes/class-sdms-shortcodes.php';
 
 // Initialize plugin classes
 function sdms_init() {
@@ -31,6 +32,7 @@ function sdms_init() {
     new sdms_Custom_Fields();
     new sdms_Settings();
     new sdms_Frontend();
+    new sdms_Shortcodes();
 }
 add_action( 'plugins_loaded', 'sdms_init' );
 
@@ -90,3 +92,27 @@ function sdms_deactivate() {
     flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'sdms_deactivate' );
+
+/**
+ * Load a template part from the plugin's templates directory.
+ *
+ * @param string $slug The slug name for the generic template.
+ * @param string $name The name of the specialized template.
+ */
+function sdms_get_template_part( $slug, $name = null ) {
+    $template = '';
+
+    // Look in plugin's templates directory
+    if ( isset( $name ) ) {
+        $template = sdms_PLUGIN_DIR . "templates/{$slug}-{$name}.php";
+    }
+
+    // If template file doesn't exist, look for slug.php
+    if ( ! file_exists( $template ) ) {
+        $template = sdms_PLUGIN_DIR . "templates/{$slug}.php";
+    }
+
+    if ( $template && file_exists( $template ) ) {
+        include $template;
+    }
+}

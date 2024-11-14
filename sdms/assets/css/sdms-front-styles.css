@@ -13,10 +13,19 @@
 
 /* File Type Icon */
 .sdms-file-type-icon {
-    vertical-align: middle;
-    margin-right: 10px;
     width: 50px;
     height: auto;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+/* Flag Icons */
+.sdms-flag-icon {
+    width: 30px;
+    height: auto;
+    margin-right: 5px;
+    display: inline-block;
+    vertical-align: middle;
 }
 
 /* Document Content */

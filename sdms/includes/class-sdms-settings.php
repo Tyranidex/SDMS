@@ -37,9 +37,10 @@ class sdms_Settings {
      * Register plugin settings.
      */
     public function register_settings() {
-        // Register settings for languages, template selection, and file type icons
+        // Enregistrer les paramètres pour les langues, la sélection des templates et les icônes de types de fichiers
         register_setting( 'sdms_settings_group', 'sdms_languages', array( $this, 'sanitize_languages' ) );
-        register_setting( 'sdms_settings_group', 'sdms_template' );
+        register_setting( 'sdms_settings_group', 'sdms_template' ); // Pour les templates de post individuel
+        register_setting( 'sdms_settings_group', 'sdms_archive_template' ); // Pour les templates d'archive
         register_setting( 'sdms_settings_group', 'sdms_file_type_icons', array( $this, 'sanitize_file_type_icons' ) );
     }
 
@@ -97,26 +98,35 @@ class sdms_Settings {
      * Render the settings page content.
      */
     public function render_settings_page() {
-        // Get the selected template from options
-        $selected_template = get_option( 'sdms_template', 'template-default.php' );
+        // Récupérer les templates sélectionnés dans les options
+        $selected_template = get_option( 'sdms_template', 'single-template-default.php' );
+        $selected_archive_template = get_option( 'sdms_archive_template', 'archive-template-default.php' );
 
-        // Paths to template directories
+        // Chemins vers les répertoires de templates
         $plugin_templates_dir = sdms_PLUGIN_DIR . 'templates/';
         $theme_templates_dir  = get_stylesheet_directory() . '/sdms-templates/';
 
-        // Merge templates from both plugin and theme directories
-        $template_files = array_merge(
-            glob( $plugin_templates_dir . '*.php' ) ?: array(),
-            glob( $theme_templates_dir . '*.php' ) ?: array()
-        );
+        // Fusionner les templates des répertoires du plugin et du thème
+        $plugin_template_files = glob( $plugin_templates_dir . '*.php' ) ?: array();
+        $theme_template_files  = glob( $theme_templates_dir . '*.php' ) ?: array();
+        $template_files = array_merge( $plugin_template_files, $theme_template_files );
 
-        // Prepare an array of templates for the select dropdown
+        // Préparer des tableaux pour les templates de posts individuels et d'archives
         $template_options = array();
+        $archive_template_options = array();
+
         foreach ( $template_files as $template_path ) {
             $template_file = basename( $template_path );
             $template_data = get_file_data( $template_path, array( 'Template Name' => 'Template Name' ) );
             $template_name = ! empty( $template_data['Template Name'] ) ? $template_data['Template Name'] : ucwords( str_replace( array( 'template-', '.php', '-' ), array( '', '', ' ' ), $template_file ) );
-            $template_options[ $template_file ] = $template_name;
+
+            if ( strpos( $template_file, 'archive-' ) === 0 ) {
+                // C'est un template d'archive
+                $archive_template_options[ $template_file ] = $template_name;
+            } elseif ( strpos( $template_file, 'single-' ) === 0 ) {
+                // C'est un template de post individuel
+                $template_options[ $template_file ] = $template_name;
+            }
         }
 
         // Get existing file type icons
@@ -179,13 +189,26 @@ class sdms_Settings {
                 <h2><?php _e( 'Template Settings', 'sdms' ); ?></h2>
                 <table class="form-table">
                     <tr valign="top">
-                        <th scope="row"><?php _e( 'Select Template', 'sdms' ); ?></th>
+                        <th scope="row"><?php _e( 'Select Single Post Template', 'sdms' ); ?></th>
                         <td>
                             <select name="sdms_template">
                                 <?php
-                                // Populate the template selection dropdown
+                                // Populate the template selection dropdown for single posts
                                 foreach ( $template_options as $file => $name ) {
                                     echo '<option value="' . esc_attr( $file ) . '" ' . selected( $selected_template, $file, false ) . '>' . esc_html( $name ) . '</option>';
+                                }
+                                ?>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr valign="top">
+                        <th scope="row"><?php _e( 'Select Archive Template', 'sdms' ); ?></th>
+                        <td>
+                            <select name="sdms_archive_template">
+                                <?php
+                                // Populate the template selection dropdown for archives
+                                foreach ( $archive_template_options as $file => $name ) {
+                                    echo '<option value="' . esc_attr( $file ) . '" ' . selected( $selected_archive_template, $file, false ) . '>' . esc_html( $name ) . '</option>';
                                 }
                                 ?>
                             </select>
