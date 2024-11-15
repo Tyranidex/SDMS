@@ -144,20 +144,5 @@ get_header();
     </main><!-- #main -->
 </div><!-- #primary -->
 
-<!-- Modale pour envoyer le document -->
-<div id="sdms-send-document-modal" style="display:none;">
-    <div class="sdms-modal-content">
-        <span class="sdms-close-modal">&times;</span>
-        <h2><?php _e( 'Envoyer le document', 'sdms' ); ?></h2>
-        <form id="sdms-send-document-form">
-            <input type="hidden" name="post_id" id="sdms-post-id" value="">
-            <label for="sdms-recipient-email"><?php _e( 'Email du destinataire:', 'sdms' ); ?></label>
-            <input type="email" name="recipient_email" id="sdms-recipient-email" required>
-            <input type="submit" value="<?php _e( 'Envoyer', 'sdms' ); ?>">
-        </form>
-        <div id="sdms-send-document-message"></div>
-    </div>
-</div>
-
 <?php
 get_footer();

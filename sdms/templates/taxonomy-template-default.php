@@ -1,12 +1,12 @@
 <?php
 /**
- * Template Name: Archive Template Default
+ * Template Name: Default Taxonomy Template
  *
- * Description: Le template par défaut pour les pages d'archive de sdms_document.
+ * Description: The default template for sdms_category taxonomy archives.
  */
 
 add_filter( 'body_class', function( $classes ) {
-    $classes[] = 'sdms-archive-template-default';
+    $classes[] = 'sdms-taxonomy-template-default';
     return $classes;
 } );
 
@@ -153,3 +153,4 @@ get_header();
 
 <?php
 get_footer();
+?>

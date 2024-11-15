@@ -28,6 +28,7 @@ jQuery(document).ready(function($) {
         e.preventDefault();
 
         var postId = $('#sdms-post-id').val();
+        var senderName = $('#sdms-sender-name').val();
         var recipientEmail = $('#sdms-recipient-email').val();
         var nonce = sdmsAjax.nonce;
 
@@ -37,6 +38,7 @@ jQuery(document).ready(function($) {
             data: {
                 action: 'sdms_send_document',
                 post_id: postId,
+                sender_name: senderName,
                 recipient_email: recipientEmail,
                 nonce: nonce
             },

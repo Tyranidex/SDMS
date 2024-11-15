@@ -81,7 +81,7 @@ class sdms_CPT {
             'show_admin_column' => true,
             'query_var'         => true,
             'rewrite'           => array(
-                'slug'       => 'docs',
+                'slug'       => 'document-category',
                 'with_front' => false,
             ),
         );

@@ -41,6 +41,7 @@ class sdms_Settings {
         register_setting( 'sdms_settings_group', 'sdms_languages', array( $this, 'sanitize_languages' ) );
         register_setting( 'sdms_settings_group', 'sdms_template' ); // Pour les templates de post individuel
         register_setting( 'sdms_settings_group', 'sdms_archive_template' ); // Pour les templates d'archive
+        register_setting( 'sdms_settings_group', 'sdms_taxonomy_template', array( $this, 'sanitize_taxonomy_template' ) );
         register_setting( 'sdms_settings_group', 'sdms_file_type_icons', array( $this, 'sanitize_file_type_icons' ) );
         register_setting( 'sdms_settings_group', 'sdms_flag_icon_type' );
     }
@@ -126,12 +127,49 @@ class sdms_Settings {
     }
 
     /**
+     * Sanitize the taxonomy template input from the settings form.
+     *
+     * @param string $input The input string to sanitize.
+     * @return string The sanitized template filename.
+     */
+    public function sanitize_taxonomy_template( $input ) {
+        // Liste des templates autorisés (plugin + thème)
+        $allowed_templates = array();
+
+        // Templates du plugin
+        $plugin_taxonomy_templates_dir = sdms_PLUGIN_DIR . 'templates/';
+        if ( file_exists( $plugin_taxonomy_templates_dir ) && is_dir( $plugin_taxonomy_templates_dir ) ) {
+            $plugin_taxonomy_templates = array_diff( scandir( $plugin_taxonomy_templates_dir ), array( '.', '..' ) );
+            $allowed_templates = array_merge( $allowed_templates, $plugin_taxonomy_templates );
+        }
+
+        // Templates du thème
+        $theme_taxonomy_templates_dir = get_stylesheet_directory() . '/sdms-templates/';
+        if ( file_exists( $theme_taxonomy_templates_dir ) && is_dir( $theme_taxonomy_templates_dir ) ) {
+            $theme_taxonomy_templates = array_diff( scandir( $theme_taxonomy_templates_dir ), array( '.', '..' ) );
+            $allowed_templates = array_merge( $allowed_templates, $theme_taxonomy_templates );
+        }
+
+        // Ajoutez l'option par défaut
+        $allowed_templates[] = 'taxonomy-template-default.php';
+
+        // Vérifier si le template sélectionné est dans la liste autorisée
+        if ( in_array( $input, $allowed_templates ) ) {
+            return sanitize_file_name( $input );
+        }
+
+        // Retourner le template par défaut si non valide
+        return 'taxonomy-template-default.php';
+    }
+
+    /**
      * Render the settings page content.
      */
     public function render_settings_page() {
         // Récupérer les templates sélectionnés dans les options
         $selected_template = get_option( 'sdms_template', 'single-template-default.php' );
         $selected_archive_template = get_option( 'sdms_archive_template', 'archive-template-default.php' );
+        $selected_taxonomy_template = get_option( 'sdms_taxonomy_template', 'taxonomy-template-default.php' );
 
         // Chemins vers les répertoires de templates
         $plugin_templates_dir = sdms_PLUGIN_DIR . 'templates/';
@@ -279,6 +317,48 @@ class sdms_Settings {
                                 }
                                 ?>
                             </select>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Taxonomy Template Selection Section -->
+                <h2><?php _e( 'Taxonomy Template Settings', 'sdms' ); ?></h2>
+                <table class="form-table wp-list-table widefat fixed striped">
+                    <tr valign="top">
+                        <th scope="row"><?php _e( 'Select Taxonomy Template', 'sdms' ); ?></th>
+                        <td>
+                            <select name="sdms_taxonomy_template">
+                                <?php
+                                // Liste des templates disponibles dans le plugin
+                                $plugin_taxonomy_templates_dir = sdms_PLUGIN_DIR . 'templates/';
+                                $plugin_taxonomy_templates = array_diff( scandir( $plugin_taxonomy_templates_dir ), array( '.', '..' ) );
+
+                                // Liste des templates disponibles dans le thème
+                                $theme_taxonomy_templates_dir = get_stylesheet_directory() . '/sdms-templates/';
+                                if ( file_exists( $theme_taxonomy_templates_dir ) && is_dir( $theme_taxonomy_templates_dir ) ) {
+                                    $theme_taxonomy_templates = array_diff( scandir( $theme_taxonomy_templates_dir ), array( '.', '..' ) );
+                                } else {
+                                    $theme_taxonomy_templates = array();
+                                }
+
+                                // Fusionner les templates du plugin et du thème
+                                $taxonomy_templates = array_merge( $plugin_taxonomy_templates, $theme_taxonomy_templates );
+
+                                // Option par défaut
+                                echo '<option value="taxonomy-template-default.php">' . __( 'Default Taxonomy Template', 'sdms' ) . '</option>';
+
+                                // Ajouter d'autres templates disponibles
+                                foreach ( $taxonomy_templates as $template ) {
+                                    // Exclure les templates par défaut pour éviter les doublons
+                                    if ( $template === 'taxonomy-template-default.php' ) {
+                                        continue;
+                                    }
+                                    echo '<option value="' . esc_attr( $template ) . '">' . esc_html( $template ) . '</option>';
+                                }
+                                echo '<option value="' . esc_attr( $template ) . '" ' . selected( $selected_taxonomy_template, $template, false ) . '>' . esc_html( $template ) . '</option>';
+                                ?>
+                            </select>
+                            <p class="description"><?php _e( 'Select a template for the taxonomy archives. You can create custom templates in your theme\'s sdms-templates folder.', 'sdms' ); ?></p>
                         </td>
                     </tr>
                 </table>

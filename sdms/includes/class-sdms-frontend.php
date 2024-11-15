@@ -35,6 +35,9 @@ class sdms_Frontend {
         add_action( 'wp_ajax_sdms_send_document', array( $this, 'handle_send_document_ajax' ) );
         add_action( 'wp_ajax_nopriv_sdms_send_document', array( $this, 'handle_send_document_ajax' ) );
 
+        // Inclure la modale dans le footer
+        add_action( 'wp_footer', array( $this, 'include_send_document_modal' ) );
+
     }
 
     /**
@@ -53,8 +56,8 @@ class sdms_Frontend {
      * Enqueue front-end styles.
      */
     public function enqueue_frontend_assets() {
-        if ( is_singular( 'sdms_document' ) || is_post_type_archive( 'sdms_document' ) ) {
-            wp_enqueue_style( 'sdms-front-styles', sdms_PLUGIN_URL . 'assets/css/sdms-front-styles.css' );
+        if ( is_singular( 'sdms_document' ) || is_post_type_archive( 'sdms_document' ) || is_tax( 'sdms_category' ) ) {
+            wp_enqueue_style( 'sdms-front-styles', sdms_PLUGIN_URL . 'assets/css/sdms-front-styles.css', array(), '1.0.0' );
 
             // Enregistrer le script pour la modale et l'AJAX
             wp_enqueue_script( 'sdms-front-script', sdms_PLUGIN_URL . 'assets/js/sdms-front-script.js', array( 'jquery' ), '1.0.0', true );
@@ -124,6 +127,13 @@ class sdms_Frontend {
             'top'
         );
 
+        // Règles de réécriture pour les archives de la taxonomie sdms_category
+        add_rewrite_rule(
+            '^document-category/([^/]+)/?$',
+            'index.php?sdms_category=$matches[1]',
+            'top'
+        );
+
         // Add query variables
         add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
     }
@@ -152,10 +162,12 @@ class sdms_Frontend {
         // Récupérer les templates sélectionnés dans les options
         $selected_single_template = get_option( 'sdms_template', 'single-template-default.php' );
         $selected_archive_template = get_option( 'sdms_archive_template', 'archive-template-default.php' );
+        $selected_taxonomy_template = get_option( 'sdms_taxonomy_template', 'taxonomy-template-default.php' );
 
         // Sanitize filenames
         $selected_single_template = sanitize_file_name( $selected_single_template );
         $selected_archive_template = sanitize_file_name( $selected_archive_template );
+        $selected_taxonomy_template = sanitize_file_name( $selected_taxonomy_template );
 
         // Chemins vers les templates
         $theme_single_template  = get_stylesheet_directory() . '/sdms-templates/' . $selected_single_template;
@@ -163,6 +175,9 @@ class sdms_Frontend {
 
         $theme_archive_template  = get_stylesheet_directory() . '/sdms-templates/' . $selected_archive_template;
         $plugin_archive_template = sdms_PLUGIN_DIR . 'templates/' . $selected_archive_template;
+
+        $theme_taxonomy_template  = get_stylesheet_directory() . '/sdms-templates/' . $selected_taxonomy_template;
+        $plugin_taxonomy_template = sdms_PLUGIN_DIR . 'templates/' . $selected_taxonomy_template;
 
         // Vérifier si nous sommes sur un post individuel de sdms_document
         if ( is_singular( 'sdms_document' ) ) {
@@ -178,6 +193,14 @@ class sdms_Frontend {
                 return $theme_archive_template;
             } elseif ( file_exists( $plugin_archive_template ) ) {
                 return $plugin_archive_template;
+            }
+        }
+        // Vérifier si nous sommes sur une archive de la taxonomie sdms_category
+        elseif ( is_tax( 'sdms_category' ) ) {
+            if ( file_exists( $theme_taxonomy_template ) ) {
+                return $theme_taxonomy_template;
+            } elseif ( file_exists( $plugin_taxonomy_template ) ) {
+                return $plugin_taxonomy_template;
             }
         }
         return $template;
@@ -278,13 +301,33 @@ class sdms_Frontend {
         return null;
     }
 
+    /**
+     * Inclure la modale de partage de documents.
+     */
+    public function include_send_document_modal() {
+        if ( is_singular( 'sdms_document' ) || is_post_type_archive( 'sdms_document' ) || is_tax( 'sdms_category' ) ) {
+            // Chemin absolu vers le template de la modale
+            $template = sdms_PLUGIN_DIR . 'templates/send-document-modal.php';
+
+            if ( file_exists( $template ) ) {
+                include( $template );
+            }
+        }
+    }
+
     public function handle_send_document_ajax() {
         // Vérifier le nonce
         check_ajax_referer( 'sdms_send_document_nonce', 'nonce' );
 
         // Récupérer les données POST
         $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+        $sender_name = isset( $_POST['sender_name'] ) ? sanitize_text_field( $_POST['sender_name'] ) : '';
         $recipient_email = isset( $_POST['recipient_email'] ) ? sanitize_email( $_POST['recipient_email'] ) : '';
+
+        // Valider le nom de l'expéditeur
+        if ( empty( $sender_name ) ) {
+            wp_send_json_error( array( 'message' => __( 'Veuillez rentrer votre nom.', 'sdms' ) ) );
+        }
 
         // Valider l'email
         if ( ! is_email( $recipient_email ) ) {
@@ -300,10 +343,37 @@ class sdms_Frontend {
         // Préparer le contenu de l'email
         $subject = sprintf( __( 'Consultez ce document : %s', 'sdms' ), get_the_title( $post_id ) );
         $permalink = get_permalink( $post_id );
-        $message = sprintf( __( 'Bonjour,%sVous pourriez être intéressé par ce document : %s%sVous pouvez le consulter ici : %s', 'sdms' ), "\n\n", get_the_title( $post_id ), "\n", $permalink );
+
+        // Construire le message en HTML
+        $message = '
+        <html>
+        <head>
+            <title>' . esc_html( $subject ) . '</title>
+        </head>
+        <body>
+            <p>Bonjour,</p>
+            <p>' . esc_html( $sender_name ) . ' vous a partagé un document : <strong>' . esc_html( get_the_title( $post_id ) ) . '</strong></p>
+            <p>
+                <a href="' . esc_url( $permalink ) . '" style="
+                    display: inline-block;
+                    padding: 10px 20px;
+                    font-size: 16px;
+                    color: #ffffff;
+                    background-color: #0073aa;
+                    text-decoration: none;
+                    border-radius: 5px;
+                ">Visionner</a>
+            </p>
+            <p>Bonne journée!</p>
+        </body>
+        </html>
+        ';
+
+        // Définir les en-têtes pour l'email HTML
+        $headers = array('Content-Type: text/html; charset=UTF-8');
 
         // Envoyer l'email
-        $sent = wp_mail( $recipient_email, $subject, $message );
+        $sent = wp_mail( $recipient_email, $subject, $message, $headers );
 
         if ( $sent ) {
             wp_send_json_success( array( 'message' => __( 'Email envoyé avec succès.', 'sdms' ) ) );
@@ -311,4 +381,5 @@ class sdms_Frontend {
             wp_send_json_error( array( 'message' => __( 'Échec de l\'envoi de l\'email. Veuillez réessayer plus tard.', 'sdms' ) ) );
         }
     }
+
 }
