@@ -344,18 +344,24 @@ class sdms_Settings {
                                 // Fusionner les templates du plugin et du thème
                                 $taxonomy_templates = array_merge( $plugin_taxonomy_templates, $theme_taxonomy_templates );
 
-                                // Option par défaut
-                                echo '<option value="taxonomy-template-default.php">' . __( 'Default Taxonomy Template', 'sdms' ) . '</option>';
+                                // Option par défaut avec sélection si nécessaire
+                                echo '<option value="taxonomy-template-default.php" ' . selected( $selected_taxonomy_template, 'taxonomy-template-default.php', false ) . '>' . __( 'Default Taxonomy Template', 'sdms' ) . '</option>';
 
-                                // Ajouter d'autres templates disponibles
+                                // Ajouter d'autres templates disponibles qui commencent par 'taxonomy-'
                                 foreach ( $taxonomy_templates as $template ) {
                                     // Exclure les templates par défaut pour éviter les doublons
                                     if ( $template === 'taxonomy-template-default.php' ) {
                                         continue;
                                     }
-                                    echo '<option value="' . esc_attr( $template ) . '">' . esc_html( $template ) . '</option>';
+
+                                    // Filtrer uniquement les templates de taxonomie
+                                    if ( strpos( $template, 'taxonomy-' ) !== 0 ) {
+                                        continue;
+                                    }
+
+                                    echo '<option value="' . esc_attr( $template ) . '" ' . selected( $selected_taxonomy_template, $template, false ) . '>' . esc_html( $template ) . '</option>';
                                 }
-                                echo '<option value="' . esc_attr( $template ) . '" ' . selected( $selected_taxonomy_template, $template, false ) . '>' . esc_html( $template ) . '</option>';
+
                                 ?>
                             </select>
                             <p class="description"><?php _e( 'Select a template for the taxonomy archives. You can create custom templates in your theme\'s sdms-templates folder.', 'sdms' ); ?></p>
@@ -561,4 +567,5 @@ class sdms_Settings {
         </script>
         <?php
     }
+
 }
