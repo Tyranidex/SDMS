@@ -1,35 +1,36 @@
-/* Admin Styles */
+/*
+*   POST DETAIL PAGE
+*   cpt documents
+*
+*/
 
-/* File Type Image Options */
+/* featured icon */
 .sdms-file-type-image-options {
     width: 100%;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
 }
+
 .sdms-file-type-image-options label {
     padding: 10px;
     cursor: pointer;
-    border: 1px solid lightgray;
+    border: 1px solid #e7e7e7;
     border-radius: 10px;
+    text-align:center;
 }
+
 .sdms-file-type-image-options label img {
     margin: 10px auto;
 }
 
-/* Admin Wrapper */
-.sdms-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-content: flex-start;
-}
-
-/* Language Files Table */
+/* Custom Fields Language Files */
 .sdms-language-files-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
 }
+
 .sdms-language-files-table th,
 .sdms-language-files-table td {
     border: 1px solid #ccc;
@@ -37,12 +38,82 @@
     text-align: center;
     vertical-align: middle;
 }
+
 .sdms-language-files-table th {
     background-color: #f9f9f9;
 }
+
 .sdms-language-files-table button {
     margin: 5px 0;
 }
+
 .sdms-language-files-table a {
     text-decoration: none;
+}
+
+
+/*
+*   SETTINGS PAGE
+*   sdms settings
+*
+*/
+
+/* Languages tab */
+.sdms-add-language {
+    margin-bottom: 30px;
+}
+
+.sdms-add-language label {
+    margin-right: 10px;
+}
+
+/* Icons tab */
+.sdms-file-type-icon label {
+    font-weight: bold;
+}
+
+.sdms-file-type-icon img {
+    border: 1px solid #ddd;
+    padding: 5px;
+    background-color: #f9f9f9;
+}
+
+.sdms-file-type-icon {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.sdms-file-type-icon .sdms-file-type-label {
+    width: 150px;
+    font-weight: bold;
+}
+
+.sdms-file-type-icon .sdms-file-type-image img {
+    max-width: 50px;
+    max-height: 50px;
+    margin-right: 15px;
+}
+
+.sdms-file-type-icon .sdms-file-type-action {
+    flex-grow: 1;
+}
+
+/* Templates tab */
+.sdms-template-settings label {
+    font-weight: bold;
+}
+
+.sdms-template-settings .sdms-template-field {
+    margin-bottom: 20px;
+}
+
+.sdms-flag-image {
+    max-width: 32px;
+    height: auto;
+}
+
+.sdms-file-icon-image {
+    max-width: 50px;
+    max-height: 50px;
 }

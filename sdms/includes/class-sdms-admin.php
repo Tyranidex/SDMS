@@ -31,7 +31,7 @@ class sdms_Admin {
     public function enqueue_admin_assets( $hook ) {
         // Enqueue only on the post edit screen for 'sdms_document'
         global $post_type;
-        if ( ( 'post.php' === $hook || 'post-new.php' === $hook ) && 'sdms_document' === $post_type ) {
+        if ( ( 'post.php' === $hook || 'post-new.php' === $hook ) && 'sdms_document' === $post_type || 'settings_page_sdms-settings' === $hook) {
             wp_enqueue_style( 'sdms-admin-styles', sdms_PLUGIN_URL . 'assets/css/sdms-admin-styles.css' );
         }
     }

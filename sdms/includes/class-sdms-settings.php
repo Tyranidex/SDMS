@@ -18,6 +18,10 @@ class sdms_Settings {
 
         // Register settings
         add_action( 'admin_init', array( $this, 'register_settings' ) );
+
+        // Register Javascript
+        add_action( 'admin_init', array( $this, 'enqueue_icon_uploader_script' ) );
+
     }
 
     /**
@@ -86,7 +90,7 @@ class sdms_Settings {
     /**
      * Enqueue the icon uploader script for the settings page.
      */
-    private function enqueue_icon_uploader_script() {
+    public function enqueue_icon_uploader_script() {
         wp_enqueue_media();
         wp_enqueue_script( 'sdms-icon-uploader', sdms_PLUGIN_URL . 'assets/js/sdms-icon-uploader.js', array( 'jquery' ), '1.0.0', true );
         wp_localize_script( 'sdms-icon-uploader', 'sdmsIconUploader', array(
@@ -236,7 +240,6 @@ class sdms_Settings {
         $file_type_icons = get_option( 'sdms_file_type_icons', array() );
 
         ?>
-
         <div class="wrap">
             <h1><?php _e( 'SDMS Settings', 'sdms' ); ?></h1>
             <form method="post" action="options.php">
@@ -254,32 +257,148 @@ class sdms_Settings {
                 $available_languages = $this->get_available_languages();
                 ?>
 
-                <!-- Add Languages Section -->
-                <h2><?php _e( 'Add Languages', 'sdms' ); ?></h2>
-                <table class="form-table wp-list-table widefat fixed striped">
-                    <tr valign="top">
-                        <th scope="row"><?php _e( 'Available Languages', 'sdms' ); ?></th>
-                        <td>
-                            <select id="sdms_language_selector">
-                                <?php
-                                // Populate the language selector dropdown
-                                foreach ( $available_languages as $lang ) {
-                                    echo '<option value="' . esc_attr( $lang['code'] ) . '">' . esc_html( $lang['lang'] ) . '</option>';
+                <!-- Navigation des Onglets -->
+                <h2 class="nav-tab-wrapper">
+                    <a href="#tab-languages" class="nav-tab nav-tab-active"><?php _e( 'Langues', 'sdms' ); ?></a>
+                    <a href="#tab-icons" class="nav-tab"><?php _e( 'Icônes', 'sdms' ); ?></a>
+                    <a href="#tab-templates" class="nav-tab"><?php _e( 'Templates', 'sdms' ); ?></a>
+                </h2>
+
+                <!-- Langues Tab Content -->
+                <div id="tab-languages" class="tab-content">
+                    <p><?php _e( 'Add or delete languages for Documents', 'sdms' ); ?></p>
+
+                    <!-- Add Languages Section -->
+                    <h2><?php _e( 'Add Languages', 'sdms' ); ?></h2>
+                    <div class="sdms-add-language">
+                        <label for="sdms_language_selector"><?php _e( 'Available Languages:', 'sdms' ); ?></label>
+                        <select id="sdms_language_selector" class="regular-text">
+                            <option value=""><?php _e( '-- Sélectionnez une langue --', 'sdms' ); ?></option>
+                            <?php
+                            // Populate the language selector dropdown
+                            foreach ( $available_languages as $lang ) {
+                                echo '<option value="' . esc_attr( $lang['code'] ) . '">' . esc_html( $lang['lang'] ) . '</option>';
+                            }
+                            ?>
+                        </select>
+                        <button type="button" class="button" id="sdms_add_language"><?php _e( 'Add', 'sdms' ); ?></button>
+                    </div>
+
+                    <!-- Added Languages Section -->
+                    <h2><?php _e( 'Added Languages', 'sdms' ); ?></h2>
+                    <table class="wp-list-table widefat fixed striped" id="sdms_languages_table">
+                        <thead>
+                            <tr>
+                                <th><?php _e( 'Flag', 'sdms' ); ?></th>
+                                <th><?php _e( 'Language', 'sdms' ); ?></th>
+                                <th><?php _e( 'Language Code', 'sdms' ); ?></th>
+                                <th><?php _e( 'Actions', 'sdms' ); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            // Display the list of added languages
+                            foreach ( $languages as $code => $language ) {
+                                // Déterminer le chemin de l'icône du drapeau
+                                if ( $selected_flag_icon_type === 'custom' ) {
+                                    // Chemin vers le drapeau personnalisé dans le thème
+                                    $flag_file = get_stylesheet_directory() . '/sdms-flags/' . $code . '.png';
+                                    $flag_url  = get_stylesheet_directory_uri() . '/sdms-flags/' . $code . '.png';
+                                    if ( ! file_exists( $flag_file ) ) {
+                                        // Si le drapeau personnalisé n'existe pas, utiliser un drapeau par défaut
+                                        $flag_url = sdms_PLUGIN_URL . 'assets/images/default-flag.png';
+                                    }
+                                } else {
+                                    // Chemin vers le drapeau du plugin
+                                    $flag_file = sdms_PLUGIN_DIR . 'assets/images/flags/' . $selected_flag_icon_type . '/' . $code . '.png';
+                                    $flag_url  = sdms_PLUGIN_URL . 'assets/images/flags/' . $selected_flag_icon_type . '/' . $code . '.png';
+                                    if ( ! file_exists( $flag_file ) ) {
+                                        // Si le drapeau n'existe pas, utiliser un drapeau par défaut
+                                        $flag_url = sdms_PLUGIN_URL . 'assets/images/default-flag.png';
+                                    }
+                                }
+                                echo '<tr>';
+                                // Colonne du drapeau
+                                echo '<td>';
+                                echo '<img src="' . esc_url( $flag_url ) . '" alt="' . esc_attr( $language['lang'] ) . '" class="sdms-flag-image">';
+                                echo '</td>';
+                                // Colonne du nom de la langue
+                                echo '<td>';
+                                echo esc_html( $language['lang'] );
+                                echo '</td>';
+                                // Colonne du code de langue
+                                echo '<td>';
+                                echo esc_html( $code );
+                                echo '</td>';
+                                // Colonne des actions
+                                echo '<td>';
+                                echo '<button type="button" class="button sdms-remove-language" data-code="' . esc_attr( $code ) . '">' . __( 'Remove', 'sdms' ) . '</button>';
+                                // Hidden inputs to store language data
+                                echo '<input type="hidden" name="sdms_languages[' . esc_attr( $code ) . '][lang]" value="' . esc_attr( $language['lang'] ) . '">';
+                                echo '<input type="hidden" name="sdms_languages[' . esc_attr( $code ) . '][flag]" value="' . esc_url( $language['flag'] ) . '">';
+                                echo '</td>';
+                                echo '</tr>';
+                            }
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Icônes Tab Content -->
+                <div id="tab-icons" class="tab-content" style="display: none;">
+                    <p><?php _e( 'Gérez les icônes associées aux types de fichiers. Vous pouvez changer les icônes existantes ou en ajouter de nouvelles.', 'sdms' ); ?></p>
+
+                    <!-- Flag Icon Type Setting -->
+                    <h2><?php _e( 'Flag Icon Settings', 'sdms' ); ?></h2>
+                    <div class="sdms-change-flags">
+                        <label for="sdms_flags_selector"><?php _e( 'Select Flag Icon Type', 'sdms' ); ?></label>
+                        <select id="sdms_flags_selector" name="sdms_flag_icon_type" class="regular-text">
+                            <option value=""><?php _e( '-- Select Icon Type --', 'sdms' ); ?></option>
+                            <?php
+                                foreach ( $flag_icon_types as $value => $label ) {
+                                    echo '<option value="' . esc_attr( $value ) . '" ' . selected( $selected_flag_icon_type, $value, false ) . '>' . esc_html( $label ) . '</option>';
                                 }
                                 ?>
-                            </select>
-                            <button type="button" class="button" id="sdms_add_language"><?php _e( 'Add', 'sdms' ); ?></button>
-                        </td>
-                    </tr>
-                </table>
+                        </select>
+                    </div>
 
-                <!-- Template Settings Section -->
-                <h2><?php _e( 'Template Settings', 'sdms' ); ?></h2>
-                <table class="form-table wp-list-table widefat fixed striped">
-                    <tr valign="top">
-                        <th scope="row"><?php _e( 'Select Single Post Template', 'sdms' ); ?></th>
-                        <td>
-                            <select name="sdms_template">
+                    <h2><?php _e( 'File Type Icons', 'sdms' ); ?></h2>
+                    <div class="sdms-file-type-icons">
+                        <?php
+                        // Afficher chaque type de fichier avec son icône et le bouton pour changer
+                        foreach ( $file_types as $key => $label ) {
+                            // Déterminer l'URL de l'icône
+                            $icon_url = isset( $file_type_icons[ $key ] ) ? $file_type_icons[ $key ] : sdms_PLUGIN_URL . 'assets/images/icons/' . $key . '.png';
+                            ?>
+                            <div class="sdms-file-type-icon">
+                                <div class="sdms-file-type-label">
+                                    <label><?php echo esc_html( $label ); ?></label>
+                                </div>
+                                <div class="sdms-file-type-image">
+                                    <img src="<?php echo esc_url( $icon_url ); ?>" alt="<?php echo esc_attr( $label ); ?>" class="sdms-file-icon-image">
+                                </div>
+                                <div class="sdms-file-type-action">
+                                    <!-- Hidden input to store the icon URL -->
+                                    <input type="hidden" name="sdms_file_type_icons[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_url( $icon_url ); ?>">
+                                    <!-- Button to upload a new icon -->
+                                    <button type="button" class="button sdms-upload-icon-button" data-file-type="<?php echo esc_attr( $key ); ?>"><?php _e( 'Change Icon', 'sdms' ); ?></button>
+                                </div>
+                            </div>
+                            <?php
+                        }
+                        ?>
+                    </div>
+                </div>
+
+                <!-- Templates Tab Content -->
+                <div id="tab-templates" class="tab-content" style="display: none;">
+                    <p><?php _e( 'Sélectionnez les templates à utiliser pour les posts individuels, les archives et les taxonomies.', 'sdms' ); ?></p>
+
+                    <h2><?php _e( 'Template Settings', 'sdms' ); ?></h2>
+                    <div class="sdms-template-settings">
+                        <div class="sdms-template-field">
+                            <label for="sdms_template"><?php _e( 'Select Single Post Template:', 'sdms' ); ?></label>
+                            <select name="sdms_template" id="sdms_template" class="regular-text">
                                 <?php
                                 // Populate the template selection dropdown for single posts
                                 foreach ( $template_options as $file => $name ) {
@@ -287,12 +406,11 @@ class sdms_Settings {
                                 }
                                 ?>
                             </select>
-                        </td>
-                    </tr>
-                    <tr valign="top">
-                        <th scope="row"><?php _e( 'Select Archive Template', 'sdms' ); ?></th>
-                        <td>
-                            <select name="sdms_archive_template">
+                        </div>
+
+                        <div class="sdms-template-field">
+                            <label for="sdms_archive_template"><?php _e( 'Select Archive Template:', 'sdms' ); ?></label>
+                            <select name="sdms_archive_template" id="sdms_archive_template" class="regular-text">
                                 <?php
                                 // Populate the template selection dropdown for archives
                                 foreach ( $archive_template_options as $file => $name ) {
@@ -300,34 +418,11 @@ class sdms_Settings {
                                 }
                                 ?>
                             </select>
-                        </td>
-                    </tr>
-                </table>
+                        </div>
 
-                <!-- Flag Icon Type Setting -->
-                <h2><?php _e( 'Flag Icon Settings', 'sdms' ); ?></h2>
-                <table class="form-table wp-list-table widefat fixed striped">
-                    <tr valign="top">
-                        <th scope="row"><?php _e( 'Select Flag Icon Type', 'sdms' ); ?></th>
-                        <td>
-                            <select name="sdms_flag_icon_type">
-                                <?php
-                                foreach ( $flag_icon_types as $value => $label ) {
-                                    echo '<option value="' . esc_attr( $value ) . '" ' . selected( $selected_flag_icon_type, $value, false ) . '>' . esc_html( $label ) . '</option>';
-                                }
-                                ?>
-                            </select>
-                        </td>
-                    </tr>
-                </table>
-
-                <!-- Taxonomy Template Selection Section -->
-                <h2><?php _e( 'Taxonomy Template Settings', 'sdms' ); ?></h2>
-                <table class="form-table wp-list-table widefat fixed striped">
-                    <tr valign="top">
-                        <th scope="row"><?php _e( 'Select Taxonomy Template', 'sdms' ); ?></th>
-                        <td>
-                            <select name="sdms_taxonomy_template">
+                        <div class="sdms-template-field">
+                            <label for="sdms_taxonomy_template"><?php _e( 'Select Taxonomy Template:', 'sdms' ); ?></label>
+                            <select name="sdms_taxonomy_template" id="sdms_taxonomy_template" class="regular-text">
                                 <?php
                                 // Liste des templates disponibles dans le plugin
                                 $plugin_taxonomy_templates_dir = sdms_PLUGIN_DIR . 'templates/';
@@ -365,99 +460,9 @@ class sdms_Settings {
                                 ?>
                             </select>
                             <p class="description"><?php _e( 'Select a template for the taxonomy archives. You can create custom templates in your theme\'s sdms-templates folder.', 'sdms' ); ?></p>
-                        </td>
-                    </tr>
-                </table>
-
-                <!-- Added Languages Section -->
-                <h2><?php _e( 'Added Languages', 'sdms' ); ?></h2>
-                <table class="wp-list-table widefat fixed striped" id="sdms_languages_table">
-                    <thead>
-                        <tr>
-                            <th><?php _e( 'Flag', 'sdms' ); ?></th>
-                            <th><?php _e( 'Language', 'sdms' ); ?></th>
-                            <th><?php _e( 'Language Code', 'sdms' ); ?></th>
-                            <th><?php _e( 'Actions', 'sdms' ); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        // Display the list of added languages
-                        foreach ( $languages as $code => $language ) {
-                            // Déterminer le chemin de l'icône du drapeau
-                            if ( $selected_flag_icon_type === 'custom' ) {
-                                // Chemin vers le drapeau personnalisé dans le thème
-                                $flag_file = get_stylesheet_directory() . '/sdms-flags/' . $code . '.png';
-                                $flag_url  = get_stylesheet_directory_uri() . '/sdms-flags/' . $code . '.png';
-                                if ( ! file_exists( $flag_file ) ) {
-                                    // Si le drapeau personnalisé n'existe pas, utiliser un drapeau par défaut
-                                    $flag_url = sdms_PLUGIN_URL . 'assets/images/default-flag.png';
-                                }
-                            } else {
-                                // Chemin vers le drapeau du plugin
-                                $flag_file = sdms_PLUGIN_DIR . 'assets/images/flags/' . $selected_flag_icon_type . '/' . $code . '.png';
-                                $flag_url  = sdms_PLUGIN_URL . 'assets/images/flags/' . $selected_flag_icon_type . '/' . $code . '.png';
-                                if ( ! file_exists( $flag_file ) ) {
-                                    // Si le drapeau n'existe pas, utiliser un drapeau par défaut
-                                    $flag_url = sdms_PLUGIN_URL . 'assets/images/default-flag.png';
-                                }
-                            }
-                            echo '<tr>';
-                            // Colonne du drapeau
-                            echo '<td>';
-                            echo '<img src="' . esc_url( $flag_url ) . '" alt="' . esc_attr( $language['lang'] ) . '" style="vertical-align: middle; max-width: 32px;">';
-                            echo '</td>';
-                            // Colonne du nom de la langue
-                            echo '<td>';
-                            echo esc_html( $language['lang'] );
-                            echo '</td>';
-                            // Colonne du code de langue
-                            echo '<td>';
-                            echo esc_html( $code );
-                            echo '</td>';
-                            // Colonne des actions
-                            echo '<td>';
-                            echo '<button type="button" class="button sdms-remove-language" data-code="' . esc_attr( $code ) . '">' . __( 'Remove', 'sdms' ) . '</button>';
-                            // Hidden inputs to store language data
-                            echo '<input type="hidden" name="sdms_languages[' . esc_attr( $code ) . '][lang]" value="' . esc_attr( $language['lang'] ) . '">';
-                            echo '<input type="hidden" name="sdms_languages[' . esc_attr( $code ) . '][flag]" value="' . esc_url( $language['flag'] ) . '">';
-                            echo '</td>';
-                            echo '</tr>';
-                        }
-                        ?>
-                    </tbody>
-                </table>
-
-                <!-- File Type Icons Section -->
-                <h2><?php _e( 'File Type Icons', 'sdms' ); ?></h2>
-                <table class="form-table wp-list-table widefat fixed striped">
-                    <?php
-                    // Display the file type icons with options to change them
-                    foreach ( $file_types as $key => $label ) {
-                        ?>
-                        <tr valign="top">
-                            <th scope="row"><?php echo esc_html( $label ); ?></th>
-                            <td>
-                                <?php
-                                // Determine the icon URL
-                                $icon_url = isset( $file_type_icons[ $key ] ) ? $file_type_icons[ $key ] : sdms_PLUGIN_URL . 'assets/images/icons/' . $key . '.png';
-                                ?>
-                                <img src="<?php echo esc_url( $icon_url ); ?>" alt="<?php echo esc_attr( $label ); ?>" style="max-width: 50px; max-height: 50px;">
-                                <!-- Hidden input to store the icon URL -->
-                                <input type="hidden" name="sdms_file_type_icons[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_url( $icon_url ); ?>">
-                                <!-- Button to upload a new icon -->
-                                <input type="button" class="button sdms-upload-icon-button" data-file-type="<?php echo esc_attr( $key ); ?>" value="<?php _e( 'Change Icon', 'sdms' ); ?>">
-                            </td>
-                        </tr>
-                        <?php
-                    }
-                    ?>
-                </table>
-
-                <?php
-                // Include JavaScript for media uploader
-                $this->enqueue_icon_uploader_script();
-                ?>
+                        </div>
+                    </div>
+                </div>
 
                 <?php submit_button(); ?>
             </form>
@@ -468,7 +473,7 @@ class sdms_Settings {
             (function($){
                 var availableLanguages = <?php echo json_encode( $available_languages ); ?>;
 
-                // Function to update the language options in the selector
+                // Fonction pour mettre à jour les options de sélection des langues
                 function updateLanguageOptions() {
                     var addedCodes = [];
                     $('#sdms_languages_table input[name^="sdms_languages"]').each(function() {
@@ -485,50 +490,67 @@ class sdms_Settings {
                     });
                 }
 
-                // Add language button click event
+                // Gestion des clics sur les onglets
+                $('.nav-tab').on('click', function(e){
+                    e.preventDefault();
+                    var target = $(this).attr('href');
+
+                    // Retirer la classe active de tous les onglets et l'ajouter à celui cliqué
+                    $('.nav-tab').removeClass('nav-tab-active');
+                    $(this).addClass('nav-tab-active');
+
+                    // Masquer toutes les sections de contenu et afficher celle ciblée
+                    $('.tab-content').hide();
+                    $(target).show();
+                });
+
+                // Gestion du clic sur le bouton "Add Language"
                 $('#sdms_add_language').on('click', function(){
                     var selectedCode = $('#sdms_language_selector').val();
+                    if (!selectedCode) {
+                        alert('<?php _e( "Veuillez sélectionner une langue à ajouter.", "sdms" ); ?>');
+                        return;
+                    }
                     var selectedLanguage = availableLanguages.find(function(lang) {
                         return lang.code === selectedCode;
                     });
 
                     if (selectedLanguage) {
-                        // Append new language to the table
+                        // Générer le chemin de l'icône du drapeau
+                        var flag_url = selectedLanguage.flag;
+
+                        // Créer une nouvelle ligne dans le tableau des langues ajoutées
                         var newRow = '<tr>' +
-                            // Colonne du drapeau
                             '<td>' +
-                                '<img src="' + selectedLanguage.flag + '" alt="' + selectedLanguage.lang + '" style="vertical-align: middle; max-width: 32px;" class="sdms-flag-image">' +
+                                '<img src="' + flag_url + '" alt="' + selectedLanguage.lang + '" class="sdms-flag-image">' +
                             '</td>' +
-                            // Colonne du nom de la langue
                             '<td>' +
                                 selectedLanguage.lang +
                             '</td>' +
-                            // Colonne du code de langue
                             '<td>' +
                                 selectedCode +
                             '</td>' +
-                            // Colonne des actions
                             '<td>' +
                                 '<button type="button" class="button sdms-remove-language" data-code="' + selectedCode + '">' + '<?php _e( 'Remove', 'sdms' ); ?>' + '</button>' +
                                 '<input type="hidden" name="sdms_languages[' + selectedCode + '][lang]" value="' + selectedLanguage.lang + '">' +
-                                '<input type="hidden" name="sdms_languages[' + selectedCode + '][flag]" value="' + selectedLanguage.flag + '">' +
+                                '<input type="hidden" name="sdms_languages[' + selectedCode + '][flag]" value="' + flag_url + '">' +
                             '</td>' +
                         '</tr>';
 
+                        // Ajouter la nouvelle ligne au tableau
                         $('#sdms_languages_table tbody').append(newRow);
 
-                        // Remove the language from the dropdown
-                        $('#sdms_language_selector option[value="' + selectedCode + '"]').remove();
+                        // Mettre à jour les options du sélecteur
+                        updateLanguageOptions();
                     }
                 });
 
-                // Remove language button click event
+                // Gestion du clic sur le bouton "Remove Language"
                 $(document).on('click', '.sdms-remove-language', function(){
                     var code = $(this).data('code');
                     $(this).closest('tr').remove();
-                    // Remove hidden inputs
-                    $('input[name^="sdms_languages[' + code + ']"]').remove();
-                    // Add back to dropdown
+
+                    // Ajouter de nouveau l'option au sélecteur
                     var language = availableLanguages.find(function(lang) {
                         return lang.code === code;
                     });
@@ -537,29 +559,30 @@ class sdms_Settings {
                     }
                 });
 
-                // Upload custom flag button click event
-                $(document).on('click', '.sdms-upload-flag', function(e){
-                    e.preventDefault();
+                // Gestion du clic sur le bouton "Change Icon"
+                $(document).on('click', '.sdms-upload-icon-button', function(){
+                    var fileType = $(this).data('file-type');
                     var button = $(this);
-                    var code = button.data('code');
 
                     var frame = wp.media({
-                        title: '<?php _e( 'Choose Custom Flag', 'sdms' ); ?>',
-                        button: { text: '<?php _e( 'Use this flag', 'sdms' ); ?>' },
+                        title: '<?php _e( "Choose Icon", "sdms" ); ?>',
+                        button: { text: '<?php _e( "Use this icon", "sdms" ); ?>' },
                         library: { type: 'image' },
                         multiple: false
                     });
 
                     frame.on('select', function() {
                         var attachment = frame.state().get('selection').first().toJSON();
-                        // Update the flag image displayed
-                        button.closest('tr').find('.sdms-flag-image').attr('src', attachment.url);
+                        // Mettre à jour l'URL de l'icône dans l'input caché
+                        button.prev('input[type="hidden"]').val(attachment.url);
+                        // Mettre à jour l'image affichée
+                        button.closest('.sdms-file-type-icon').find('img.sdms-file-icon-image').attr('src', attachment.url);
                     });
 
                     frame.open();
                 });
 
-                // Initialize on page load
+                // Initialiser les options de langue au chargement de la page
                 $(document).ready(function() {
                     updateLanguageOptions();
                 });
