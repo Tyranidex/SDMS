@@ -117,3 +117,49 @@
     max-width: 50px;
     max-height: 50px;
 }
+
+
+/*RESET*/
+
+.sdms-add-language {
+    margin-bottom: 30px;
+}
+
+.sdms-add-language label {
+    margin-right: 10px;
+}
+
+.sdms-file-type-icon {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.sdms-file-type-icon .sdms-file-type-label {
+    width: 150px;
+    font-weight: bold;
+}
+
+.sdms-file-type-icon .sdms-file-type-image img {
+    max-width: 50px;
+    max-height: 50px;
+    margin-right: 15px;
+}
+
+.sdms-file-type-icon .sdms-file-type-action {
+    flex-grow: 1;
+}
+
+.sdms-template-settings .sdms-template-field {
+    margin-bottom: 20px;
+}
+
+.sdms-flag-image {
+    max-width: 32px;
+    height: auto;
+}
+
+.sdms-file-icon-image {
+    max-width: 50px;
+    max-height: 50px;
+}
