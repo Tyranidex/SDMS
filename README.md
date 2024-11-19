@@ -277,4 +277,5 @@ This plugin is licensed under the [GNU General Public License v3.0](https://www.
 ---
 
 ## Credits
+
 Developed by Dorian Renon with the help of ChatGPT.
