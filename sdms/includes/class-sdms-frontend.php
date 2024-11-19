@@ -1,16 +1,15 @@
 <?php
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 /**
- * Class sdms_Frontend
+ * Class SDMS_Frontend
  *
  * Handles front-end functionalities, including custom permalinks, rewrite rules,
  * template loading, file downloads, and enqueueing front-end assets.
  */
-class sdms_Frontend {
+class SDMS_Frontend {
 
     public function __construct() {
         // Modify the permalink structure
@@ -31,13 +30,12 @@ class sdms_Frontend {
         // Adjust main query
         add_action( 'pre_get_posts', array( $this, 'adjust_sdms_archive_query' ) );
 
-        // Ajax Action for sharing documents
+        // AJAX Action for sharing documents
         add_action( 'wp_ajax_sdms_send_document', array( $this, 'handle_send_document_ajax' ) );
         add_action( 'wp_ajax_nopriv_sdms_send_document', array( $this, 'handle_send_document_ajax' ) );
 
-        // Inclure la modale dans le footer
+        // Include the modal in the footer
         add_action( 'wp_footer', array( $this, 'include_send_document_modal' ) );
-
     }
 
     /**
@@ -53,16 +51,16 @@ class sdms_Frontend {
     }
 
     /**
-     * Enqueue front-end styles.
+     * Enqueue front-end styles and scripts.
      */
     public function enqueue_frontend_assets() {
         if ( is_singular( 'sdms_document' ) || is_post_type_archive( 'sdms_document' ) || is_tax( 'sdms_category' ) ) {
-            wp_enqueue_style( 'sdms-front-styles', sdms_PLUGIN_URL . 'assets/css/sdms-front-styles.css', array(), '1.0.0' );
+            wp_enqueue_style( 'sdms-front-styles', SDMS_PLUGIN_URL . 'assets/css/sdms-front-styles.css', array(), '1.0.0' );
 
-            // Enregistrer le script pour la modale et l'AJAX
-            wp_enqueue_script( 'sdms-front-script', sdms_PLUGIN_URL . 'assets/js/sdms-front-script.js', array( 'jquery' ), '1.0.0', true );
+            // Enqueue the script for the modal and AJAX
+            wp_enqueue_script( 'sdms-front-script', SDMS_PLUGIN_URL . 'assets/js/sdms-front-script.js', array( 'jquery' ), '1.0.0', true );
 
-            // Localiser le script pour passer l'URL AJAX et le nonce
+            // Localize script to pass AJAX URL and nonce
             wp_localize_script( 'sdms-front-script', 'sdmsAjax', array(
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
                 'nonce'    => wp_create_nonce( 'sdms_send_document_nonce' ),
@@ -99,10 +97,31 @@ class sdms_Frontend {
         add_rewrite_tag( '%language%', '([^/]+)', 'language=' );
         add_rewrite_tag( '%sdms_download%', '([0-1]{1})', 'sdms_download=' );
 
-        // Rewrite rules for documents with category and download
+        // Rewrite rules for documents with category and download with language
         add_rewrite_rule(
             '^docs/([^/]+)/([^/]+)/download/([a-z]{2})/?$',
             'index.php?sdms_category=$matches[1]&sdms_document=$matches[2]&sdms_download=1&language=$matches[3]',
+            'top'
+        );
+
+        // Rewrite rules for documents with category and download without language
+        add_rewrite_rule(
+            '^docs/([^/]+)/([^/]+)/download/?$',
+            'index.php?sdms_category=$matches[1]&sdms_document=$matches[2]&sdms_download=1',
+            'top'
+        );
+
+        // Rewrite rules for documents without category with download and language
+        add_rewrite_rule(
+            '^docs/([^/]+)/download/([a-z]{2})/?$',
+            'index.php?sdms_document=$matches[1]&sdms_download=1&language=$matches[2]',
+            'top'
+        );
+
+        // Rewrite rules for documents without category with download without language
+        add_rewrite_rule(
+            '^docs/([^/]+)/download/?$',
+            'index.php?sdms_document=$matches[1]&sdms_download=1',
             'top'
         );
 
@@ -113,13 +132,6 @@ class sdms_Frontend {
             'top'
         );
 
-        // Rewrite rules for documents without category with download
-        add_rewrite_rule(
-            '^docs/([^/]+)/download/([a-z]{2})/?$',
-            'index.php?sdms_document=$matches[1]&sdms_download=1&language=$matches[2]',
-            'top'
-        );
-
         // Rewrite rules for documents without category without download
         add_rewrite_rule(
             '^docs/([^/]+)/?$',
@@ -127,7 +139,7 @@ class sdms_Frontend {
             'top'
         );
 
-        // Règles de réécriture pour les archives de la taxonomie sdms_category
+        // Rewrite rules for sdms_category taxonomy archives
         add_rewrite_rule(
             '^document-category/([^/]+)/?$',
             'index.php?sdms_category=$matches[1]',
@@ -159,50 +171,42 @@ class sdms_Frontend {
      * @return string Modified template path.
      */
     public function load_custom_template( $template ) {
-        // Récupérer les templates sélectionnés dans les options
-        $selected_single_template = get_option( 'sdms_template', 'single-template-default.php' );
-        $selected_archive_template = get_option( 'sdms_archive_template', 'archive-template-default.php' );
+        // Retrieve selected templates from options
+        $selected_single_template   = get_option( 'sdms_template', 'single-template-default.php' );
+        $selected_archive_template  = get_option( 'sdms_archive_template', 'archive-template-default.php' );
         $selected_taxonomy_template = get_option( 'sdms_taxonomy_template', 'taxonomy-template-default.php' );
 
         // Sanitize filenames
-        $selected_single_template = sanitize_file_name( $selected_single_template );
-        $selected_archive_template = sanitize_file_name( $selected_archive_template );
+        $selected_single_template   = sanitize_file_name( $selected_single_template );
+        $selected_archive_template  = sanitize_file_name( $selected_archive_template );
         $selected_taxonomy_template = sanitize_file_name( $selected_taxonomy_template );
 
-        // Chemins vers les templates
-        $theme_single_template  = get_stylesheet_directory() . '/sdms-templates/' . $selected_single_template;
-        $plugin_single_template = sdms_PLUGIN_DIR . 'templates/' . $selected_single_template;
+        // Paths to templates
+        $theme_templates_dir = get_stylesheet_directory() . '/sdms-templates/';
 
-        $theme_archive_template  = get_stylesheet_directory() . '/sdms-templates/' . $selected_archive_template;
-        $plugin_archive_template = sdms_PLUGIN_DIR . 'templates/' . $selected_archive_template;
-
-        $theme_taxonomy_template  = get_stylesheet_directory() . '/sdms-templates/' . $selected_taxonomy_template;
-        $plugin_taxonomy_template = sdms_PLUGIN_DIR . 'templates/' . $selected_taxonomy_template;
-
-        // Vérifier si nous sommes sur un post individuel de sdms_document
+        // Determine the correct template path
         if ( is_singular( 'sdms_document' ) ) {
-            if ( file_exists( $theme_single_template ) ) {
-                return $theme_single_template;
-            } elseif ( file_exists( $plugin_single_template ) ) {
-                return $plugin_single_template;
-            }
+            $template_file = $selected_single_template;
+        } elseif ( is_post_type_archive( 'sdms_document' ) ) {
+            $template_file = $selected_archive_template;
+        } elseif ( is_tax( 'sdms_category' ) ) {
+            $template_file = $selected_taxonomy_template;
+        } else {
+            return $template;
         }
-        // Vérifier si nous sommes sur la page d'archive de sdms_document
-        elseif ( is_post_type_archive( 'sdms_document' ) ) {
-            if ( file_exists( $theme_archive_template ) ) {
-                return $theme_archive_template;
-            } elseif ( file_exists( $plugin_archive_template ) ) {
-                return $plugin_archive_template;
-            }
+
+        // Check theme directory first
+        $theme_template = $theme_templates_dir . $template_file;
+        if ( file_exists( $theme_template ) ) {
+            return $theme_template;
         }
-        // Vérifier si nous sommes sur une archive de la taxonomie sdms_category
-        elseif ( is_tax( 'sdms_category' ) ) {
-            if ( file_exists( $theme_taxonomy_template ) ) {
-                return $theme_taxonomy_template;
-            } elseif ( file_exists( $plugin_taxonomy_template ) ) {
-                return $plugin_taxonomy_template;
-            }
+
+        // Fallback to plugin directory
+        $plugin_template = SDMS_PLUGIN_DIR . 'templates/' . $template_file;
+        if ( file_exists( $plugin_template ) ) {
+            return $plugin_template;
         }
+
         return $template;
     }
 
@@ -213,7 +217,7 @@ class sdms_Frontend {
         if ( get_query_var( 'sdms_download' ) ) {
             $document_slug = get_query_var( 'sdms_document' );
             $category_slug = get_query_var( 'sdms_category' );
-            $language      = get_query_var( 'language', 'en' );
+            $language      = get_query_var( 'language', '' ); // Default to empty string
 
             // Build the path
             $path = $category_slug ? $category_slug . '/' . $document_slug : $document_slug;
@@ -221,6 +225,11 @@ class sdms_Frontend {
             // Find the post based on the path
             $post = $this->get_post_by_path( $path );
             if ( $post ) {
+                if ( empty( $language ) ) {
+                    // If language is not specified, get the default or fallback language
+                    $language = sdms_get_default_language( $post->ID );
+                }
+
                 // Get the file ID for the specified language
                 $file_id = get_post_meta( $post->ID, 'sdms_file_' . $language, true );
                 if ( $file_id ) {
@@ -302,12 +311,12 @@ class sdms_Frontend {
     }
 
     /**
-     * Inclure la modale de partage de documents.
+     * Include the modal template in the footer.
      */
     public function include_send_document_modal() {
         if ( is_singular( 'sdms_document' ) || is_post_type_archive( 'sdms_document' ) || is_tax( 'sdms_category' ) ) {
-            // Chemin absolu vers le template de la modale
-            $template = sdms_PLUGIN_DIR . 'templates/send-document-modal.php';
+            // Path to the modal template
+            $template = SDMS_PLUGIN_DIR . 'includes/send-document-modal.php';
 
             if ( file_exists( $template ) ) {
                 include( $template );
@@ -315,44 +324,47 @@ class sdms_Frontend {
         }
     }
 
+    /**
+     * Handle AJAX request to send the document via email.
+     */
     public function handle_send_document_ajax() {
-        // Vérifier le nonce
+        // Verify the nonce
         check_ajax_referer( 'sdms_send_document_nonce', 'nonce' );
 
-        // Récupérer les données POST
-        $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
-        $sender_name = isset( $_POST['sender_name'] ) ? sanitize_text_field( $_POST['sender_name'] ) : '';
+        // Get POST data
+        $post_id         = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+        $sender_name     = isset( $_POST['sender_name'] ) ? sanitize_text_field( $_POST['sender_name'] ) : '';
         $recipient_email = isset( $_POST['recipient_email'] ) ? sanitize_email( $_POST['recipient_email'] ) : '';
 
-        // Valider le nom de l'expéditeur
+        // Validate sender name
         if ( empty( $sender_name ) ) {
-            wp_send_json_error( array( 'message' => __( 'Veuillez rentrer votre nom.', 'sdms' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Please enter your name.', 'sdms' ) ) );
         }
 
-        // Valider l'email
+        // Validate email
         if ( ! is_email( $recipient_email ) ) {
-            wp_send_json_error( array( 'message' => __( 'Adresse email invalide.', 'sdms' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid email address.', 'sdms' ) ) );
         }
 
-        // Vérifier si le post existe et est du bon type
+        // Check if the post exists and is of the correct type
         $post = get_post( $post_id );
         if ( ! $post || $post->post_type != 'sdms_document' ) {
-            wp_send_json_error( array( 'message' => __( 'Document invalide.', 'sdms' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid document.', 'sdms' ) ) );
         }
 
-        // Préparer le contenu de l'email
-        $subject = sprintf( __( 'Consultez ce document : %s', 'sdms' ), get_the_title( $post_id ) );
+        // Prepare email content
+        $subject   = sprintf( __( 'Check out this document: %s', 'sdms' ), get_the_title( $post_id ) );
         $permalink = get_permalink( $post_id );
 
-        // Construire le message en HTML
+        // Build the message in HTML
         $message = '
         <html>
         <head>
             <title>' . esc_html( $subject ) . '</title>
         </head>
         <body>
-            <p>Bonjour,</p>
-            <p>' . esc_html( $sender_name ) . ' vous a partagé un document : <strong>' . esc_html( get_the_title( $post_id ) ) . '</strong></p>
+            <p>' . __( 'Hello,', 'sdms' ) . '</p>
+            <p>' . esc_html( $sender_name ) . ' ' . __( 'has shared a document with you:', 'sdms' ) . ' <strong>' . esc_html( get_the_title( $post_id ) ) . '</strong></p>
             <p>
                 <a href="' . esc_url( $permalink ) . '" style="
                     display: inline-block;
@@ -362,24 +374,23 @@ class sdms_Frontend {
                     background-color: #0073aa;
                     text-decoration: none;
                     border-radius: 5px;
-                ">Visionner</a>
+                ">' . __( 'View Document', 'sdms' ) . '</a>
             </p>
-            <p>Bonne journée!</p>
+            <p>' . __( 'Have a great day!', 'sdms' ) . '</p>
         </body>
         </html>
         ';
 
-        // Définir les en-têtes pour l'email HTML
-        $headers = array('Content-Type: text/html; charset=UTF-8');
+        // Set headers for HTML email
+        $headers = array( 'Content-Type: text/html; charset=UTF-8' );
 
-        // Envoyer l'email
+        // Send the email
         $sent = wp_mail( $recipient_email, $subject, $message, $headers );
 
         if ( $sent ) {
-            wp_send_json_success( array( 'message' => __( 'Email envoyé avec succès.', 'sdms' ) ) );
+            wp_send_json_success( array( 'message' => __( 'Email sent successfully.', 'sdms' ) ) );
         } else {
-            wp_send_json_error( array( 'message' => __( 'Échec de l\'envoi de l\'email. Veuillez réessayer plus tard.', 'sdms' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to send email. Please try again later.', 'sdms' ) ) );
         }
     }
-
 }

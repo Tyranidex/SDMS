@@ -1,15 +1,14 @@
 <?php
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 /**
- * Class sdms_Custom_Fields
+ * Class SDMS_Custom_Fields
  *
  * Handles custom fields for the SDMS plugin, specifically the language files associated with documents.
  */
-class sdms_Custom_Fields {
+class SDMS_Custom_Fields {
 
     public function __construct() {
         // Add meta boxes for language files
@@ -48,19 +47,9 @@ class sdms_Custom_Fields {
             $languages = array();
         }
 
-        // Récupérer le type d'icône de drapeau sélectionné
-        $selected_flag_icon_type = get_option( 'sdms_flag_icon_type', 'squared' );
-
-        // Si 'custom' est sélectionné mais que le dossier n'existe pas, revenir à 'squared'
-        if ( $selected_flag_icon_type === 'custom' ) {
-            $custom_flags_dir = get_stylesheet_directory() . '/sdms-flags/';
-            if ( ! ( file_exists( $custom_flags_dir ) && is_dir( $custom_flags_dir ) ) ) {
-                $selected_flag_icon_type = 'squared';
-            }
-        }
-
-        // Include the media uploader script
-        $this->enqueue_media_script();
+        // Enqueue media uploader script
+        wp_enqueue_media();
+        wp_enqueue_script( 'sdms-admin-script' ); // Ensure admin script is enqueued
 
         // Start the table
         echo '<table class="form-table sdms-language-files-table">';
@@ -68,25 +57,7 @@ class sdms_Custom_Fields {
         echo '<tr>';
         // Language headers with flags
         foreach ( $languages as $code => $language ) {
-            // Déterminer le chemin de l'icône du drapeau
-            if ( $selected_flag_icon_type === 'custom' ) {
-                // Chemin vers le drapeau personnalisé dans le thème
-                $flag_file = get_stylesheet_directory() . '/sdms-flags/' . $code . '.png';
-                $flag_url  = get_stylesheet_directory_uri() . '/sdms-flags/' . $code . '.png';
-                if ( ! file_exists( $flag_file ) ) {
-                    // Si le drapeau personnalisé n'existe pas, utiliser un drapeau par défaut
-                    $flag_url = sdms_PLUGIN_URL . 'assets/images/default-flag.png';
-                }
-            } else {
-                // Chemin vers le drapeau du plugin
-                $flag_file = sdms_PLUGIN_DIR . 'assets/images/flags/' . $selected_flag_icon_type . '/' . $code . '.png';
-                $flag_url  = sdms_PLUGIN_URL . 'assets/images/flags/' . $selected_flag_icon_type . '/' . $code . '.png';
-                if ( ! file_exists( $flag_file ) ) {
-                    // Si le drapeau n'existe pas, utiliser un drapeau par défaut
-                    $flag_url = sdms_PLUGIN_URL . 'assets/images/default-flag.png';
-                }
-            }
-
+            $flag_url = sdms_get_flag_url( $code );
             echo '<th>';
             echo '<img src="' . esc_url( $flag_url ) . '" alt="' . esc_attr( $language['lang'] ) . '" style="vertical-align: middle; max-width: 24px; margin-right: 5px;">';
             echo esc_html( $language['lang'] );
@@ -99,8 +70,8 @@ class sdms_Custom_Fields {
         // Row 1: File status (View File / No file uploaded)
         echo '<tr>';
         foreach ( $languages as $code => $language ) {
-            $file_id   = get_post_meta( $post->ID, 'sdms_file_' . $code, true );
-            $file_url  = $file_id ? wp_get_attachment_url( $file_id ) : '';
+            $file_id  = get_post_meta( $post->ID, 'sdms_file_' . $code, true );
+            $file_url = $file_id ? wp_get_attachment_url( $file_id ) : '';
 
             echo '<td>';
             if ( $file_url ) {
@@ -138,21 +109,6 @@ class sdms_Custom_Fields {
 
         echo '</tbody>';
         echo '</table>';
-    }
-
-    /**
-     * Enqueue script for media uploader.
-     */
-    private function enqueue_media_script() {
-        wp_enqueue_media();
-        wp_enqueue_script( 'sdms-media-uploader', sdms_PLUGIN_URL . 'assets/js/sdms-media-uploader.js', array( 'jquery' ), '1.0.0', true );
-        wp_localize_script( 'sdms-media-uploader', 'sdmsUploader', array(
-            'title'      => __( 'Choose File', 'sdms' ),
-            'button'     => __( 'Use this file', 'sdms' ),
-            'viewFile'   => __( 'View File', 'sdms' ),
-            'removeFile' => __( 'Remove File', 'sdms' ),
-            'noFile'     => __( 'No file uploaded.', 'sdms' ),
-        ) );
     }
 
     /**

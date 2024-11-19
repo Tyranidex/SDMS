@@ -1,15 +1,14 @@
 <?php
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 /**
- * Class sdms_CPT
+ * Class SDMS_CPT
  *
  * Registers the custom post type 'sdms_document' and associated taxonomy 'sdms_category'.
  */
-class sdms_CPT {
+class SDMS_CPT {
 
     public function __construct() {
         // Register custom post type and taxonomy on init

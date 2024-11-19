@@ -1,16 +1,15 @@
 <?php
-
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 /**
- * Class sdms_Admin
+ * Class SDMS_Admin
  *
  * Handles admin-related functionalities, including enqueueing admin assets
  * and modifying the document edit screen.
  */
-class sdms_Admin {
+class SDMS_Admin {
 
     public function __construct() {
         // Enqueue admin scripts and styles
@@ -29,10 +28,21 @@ class sdms_Admin {
      * @param string $hook The current admin page.
      */
     public function enqueue_admin_assets( $hook ) {
-        // Enqueue only on the post edit screen for 'sdms_document'
         global $post_type;
-        if ( ( 'post.php' === $hook || 'post-new.php' === $hook ) && 'sdms_document' === $post_type || 'settings_page_sdms-settings' === $hook) {
-            wp_enqueue_style( 'sdms-admin-styles', sdms_PLUGIN_URL . 'assets/css/sdms-admin-styles.css' );
+        if ( ( 'post.php' === $hook || 'post-new.php' === $hook ) && 'sdms_document' === $post_type || 'settings_page_sdms-settings' === $hook ) {
+            wp_enqueue_style( 'sdms-admin-styles', SDMS_PLUGIN_URL . 'assets/css/sdms-admin-styles.css' );
+            wp_enqueue_script( 'sdms-admin-script', SDMS_PLUGIN_URL . 'assets/js/sdms-admin-script.js', array( 'jquery', 'wp-mediaelement' ), '1.0.0', true );
+
+            // Localize script with necessary data
+            wp_localize_script( 'sdms-admin-script', 'sdmsAdmin', array(
+                'title'                => __( 'Choose Icon', 'sdms' ),
+                'button'               => __( 'Use this icon', 'sdms' ),
+                'remove_label'         => __( 'Remove', 'sdms' ),
+                'reset_label'          => __( 'Reset', 'sdms' ),
+                'add_language_alert'   => __( 'Please select a language to add.', 'sdms' ),
+                'available_languages'  => $this->get_available_languages(),
+                'default_icons'        => $this->get_default_file_type_icons(),
+            ) );
         }
     }
 
@@ -84,7 +94,7 @@ class sdms_Admin {
         echo '<div class="sdms-file-type-image-options">';
         foreach ( $file_types as $key => $label ) {
             // Determine the icon URL
-            $icon_url = isset( $file_type_icons[ $key ] ) ? $file_type_icons[ $key ] : sdms_PLUGIN_URL . 'assets/images/icons/' . $key . '.png';
+            $icon_url = isset( $file_type_icons[ $key ] ) ? $file_type_icons[ $key ] : SDMS_PLUGIN_URL . 'assets/images/icons/' . $key . '.png';
 
             // Output radio buttons with icons
             echo '<label>';
@@ -120,5 +130,36 @@ class sdms_Admin {
         // Sanitize and save the selected file type image
         $file_type_image = sanitize_text_field( $_POST['sdms_file_type_image'] );
         update_post_meta( $post_id, '_sdms_file_type_image', $file_type_image );
+    }
+
+    /**
+     * Get available languages from JSON file.
+     *
+     * @return array
+     */
+    private function get_available_languages() {
+        $json_file = SDMS_LANGUAGES_FILE;
+        if ( file_exists( $json_file ) ) {
+            $json_data = file_get_contents( $json_file );
+            $languages = json_decode( $json_data, true );
+            if ( json_last_error() === JSON_ERROR_NONE ) {
+                return $languages;
+            }
+        }
+        return array();
+    }
+
+    /**
+     * Get default file type icons.
+     *
+     * @return array
+     */
+    private function get_default_file_type_icons() {
+        $file_types = array( 'pdf', 'word', 'excel', 'image', 'video', 'psd', 'ai' );
+        $icons = array();
+        foreach ( $file_types as $type ) {
+            $icons[ $type ] = SDMS_PLUGIN_URL . 'assets/images/icons/' . $type . '.png';
+        }
+        return $icons;
     }
 }

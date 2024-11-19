@@ -1,20 +1,24 @@
 jQuery(document).ready(function($) {
 
-    // Ouvrir la modale lorsque le bouton est cliqué
+    /**
+     * Handles the modal display and form submission for sending documents via email.
+     */
+
+    // Open the modal when the button is clicked
     $('.sdms-send-document-button').on('click', function() {
         var postId = $(this).data('post-id');
         $('#sdms-post-id').val(postId);
         $('#sdms-send-document-modal').show();
     });
 
-    // Fermer la modale lorsque le bouton de fermeture est cliqué
+    // Close the modal when the close button is clicked
     $('.sdms-close-modal').on('click', function() {
         $('#sdms-send-document-modal').hide();
         $('#sdms-send-document-form')[0].reset();
         $('#sdms-send-document-message').empty();
     });
 
-    // Fermer la modale en cliquant en dehors du contenu
+    // Close the modal when clicking outside the content
     $(window).on('click', function(event) {
         if ($(event.target).is('#sdms-send-document-modal')) {
             $('#sdms-send-document-modal').hide();
@@ -23,7 +27,7 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Gérer la soumission du formulaire
+    // Handle the form submission
     $('#sdms-send-document-form').on('submit', function(e) {
         e.preventDefault();
 
@@ -49,7 +53,8 @@ jQuery(document).ready(function($) {
                 }
             },
             error: function(xhr, status, error) {
-                $('#sdms-send-document-message').html('<p>' + xhr.responseJSON.data.message + '</p>');
+                var errorMessage = xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message ? xhr.responseJSON.data.message : 'An error occurred.';
+                $('#sdms-send-document-message').html('<p>' + errorMessage + '</p>');
             }
         });
     });

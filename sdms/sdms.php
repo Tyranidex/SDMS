@@ -2,7 +2,7 @@
 /*
 Plugin Name: Simple Document Management System (SDMS)
 Description: A plugin to manage documents with multilingual support.
-Version: 1.0.1
+Version: 1.0.2
 Author: Dorian Renon
 Text Domain: sdms
 Domain Path: /languages
@@ -14,27 +14,25 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants for directory and URL paths
-define( 'sdms_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
-define( 'sdms_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-define( 'sdms_LANGUAGES_FILE', sdms_PLUGIN_DIR . 'languages.json' );
+define( 'SDMS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'SDMS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'SDMS_LANGUAGES_FILE', SDMS_PLUGIN_DIR . 'languages.json' );
 
 // Include necessary class files
-require_once sdms_PLUGIN_DIR . 'includes/class-sdms-cpt.php';
-require_once sdms_PLUGIN_DIR . 'includes/class-sdms-admin.php';
-require_once sdms_PLUGIN_DIR . 'includes/class-sdms-frontend.php';
-require_once sdms_PLUGIN_DIR . 'includes/class-sdms-custom-fields.php';
-require_once sdms_PLUGIN_DIR . 'includes/class-sdms-settings.php';
-require_once sdms_PLUGIN_DIR . 'includes/class-sdms-shortcodes.php';
-require_once sdms_PLUGIN_DIR . 'includes/sdms-functions.php';
+require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-cpt.php';
+require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-admin.php';
+require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-frontend.php';
+require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-custom-fields.php';
+require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-settings.php';
+require_once SDMS_PLUGIN_DIR . 'includes/sdms-functions.php';
 
 // Initialize plugin classes
 function sdms_init() {
-    new sdms_CPT();
-    new sdms_Admin();
-    new sdms_Custom_Fields();
-    new sdms_Settings();
-    new sdms_Frontend();
-    new sdms_Shortcodes();
+    new SDMS_CPT();
+    new SDMS_Admin();
+    new SDMS_Custom_Fields();
+    new SDMS_Settings();
+    new SDMS_Frontend();
 }
 add_action( 'plugins_loaded', 'sdms_init' );
 
@@ -43,7 +41,7 @@ add_action( 'plugins_loaded', 'sdms_init' );
  */
 function sdms_activate() {
     // Load languages from JSON file
-    $json_file = sdms_LANGUAGES_FILE;
+    $json_file = SDMS_LANGUAGES_FILE;
     $available_languages = array();
 
     if ( file_exists( $json_file ) ) {
@@ -57,7 +55,7 @@ function sdms_activate() {
         if ( isset( $language['code'] ) && $language['code'] === 'en' ) {
             $default_language['en'] = array(
                 'lang' => sanitize_text_field( $language['lang'] ),
-                'flag'    => esc_url_raw( $language['flag'] ),
+                'flag' => esc_url_raw( $language['flag'] ),
             );
             break;
         }
@@ -66,8 +64,8 @@ function sdms_activate() {
     // If the English language is not found, use a fallback
     if ( empty( $default_language ) ) {
         $default_language['en'] = array(
-            'lang' => 'United Kingdom',
-            'flag'    => 'https://flagcdn.com/w20/gb.png', // Default flag URL
+            'lang' => 'English',
+            'flag' => SDMS_PLUGIN_URL . 'assets/images/flags/squared/en.png',
         );
     }
 
@@ -92,27 +90,3 @@ function sdms_deactivate() {
     flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'sdms_deactivate' );
-
-/**
- * Load a template part from the plugin's templates directory.
- *
- * @param string $slug The slug name for the generic template.
- * @param string $name The name of the specialized template.
- */
-function sdms_get_template_part( $slug, $name = null ) {
-    $template = '';
-
-    // Look in plugin's templates directory
-    if ( isset( $name ) ) {
-        $template = sdms_PLUGIN_DIR . "templates/{$slug}-{$name}.php";
-    }
-
-    // If template file doesn't exist, look for slug.php
-    if ( ! file_exists( $template ) ) {
-        $template = sdms_PLUGIN_DIR . "templates/{$slug}.php";
-    }
-
-    if ( $template && file_exists( $template ) ) {
-        include $template;
-    }
-}
