@@ -1,6 +1,6 @@
 # Simple Document Management System (SDMS)
 
-**Version**: 1.0.2  
+**Version**: 1.0.1  
 **Author**: Dorian Renon
 
 ---
@@ -277,6 +277,4 @@ This plugin is licensed under the [GNU General Public License v3.0](https://www.
 ---
 
 ## Credits
-
 Developed by Dorian Renon with the help of ChatGPT.
-
