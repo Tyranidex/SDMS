@@ -188,4 +188,84 @@ jQuery(document).ready(function($) {
         cell.find('.sdms-upload-button').show();
     });
 
+    // Add Role button click
+    $('#sdms_add_role').on('click', function(){
+        var roleSlug = $('#sdms_new_role_slug').val().trim();
+        var roleName = $('#sdms_new_role_name').val().trim();
+
+        if (!roleSlug || !roleName) {
+            alert(sdmsAdmin.add_role_alert);
+            return;
+        }
+
+        // Check if role slug already exists
+        if ($('input.sdms-role-slug').filter(function() { return $(this).val() === roleSlug; }).length > 0) {
+            alert(sdmsAdmin.role_exists_alert);
+            return;
+        }
+
+        // Create new table row
+        var newRow = '<tr>' +
+            '<td><input type="text" name="sdms_user_roles[' + roleSlug + '][slug]" value="' + roleSlug + '" class="regular-text sdms-role-slug"></td>' +
+            '<td><input type="text" name="sdms_user_roles[' + roleSlug + '][name]" value="' + roleName + '" class="regular-text"></td>' +
+            '<td><button type="button" class="button sdms-remove-role" data-role="' + roleSlug + '">' + sdmsAdmin.remove_label + '</button></td>' +
+        '</tr>';
+
+        // Append the new row to the table
+        $('#sdms_user_roles_table tbody').append(newRow);
+
+        // Clear input fields
+        $('#sdms_new_role_slug').val('');
+        $('#sdms_new_role_name').val('');
+    });
+
+    // Remove Role button click
+    $(document).on('click', '.sdms-remove-role', function(){
+        $(this).closest('tr').remove();
+    });
+
+
+    // User search autocomplete
+    $('#sdms-user-search').autocomplete({
+        source: function(request, response) {
+            $.ajax({
+                url: sdmsAdmin.ajax_url,
+                dataType: 'json',
+                data: {
+                    action: 'sdms_user_search',
+                    term: request.term,
+                    nonce: sdmsAdmin.user_search_nonce
+                },
+                success: function(data) {
+                    response(data);
+                }
+            });
+        },
+        select: function(event, ui) {
+            // Add the selected user to the list
+            var userId = ui.item.id;
+            var userLabel = ui.item.label;
+
+            // Check if user is already selected
+            if ($('#sdms-selected-users li[data-user-id="' + userId + '"]').length === 0) {
+                var newUser = '<li data-user-id="' + userId + '">' +
+                    userLabel +
+                    ' <button type="button" class="button sdms-remove-user">&times;</button>' +
+                    '<input type="hidden" name="sdms_allowed_users[]" value="' + userId + '">' +
+                    '</li>';
+
+                $('#sdms-selected-users').append(newUser);
+            }
+
+            // Clear the search field
+            $(this).val('');
+            return false;
+        }
+    });
+
+    // Remove selected user
+    $(document).on('click', '.sdms-remove-user', function(){
+        $(this).closest('li').remove();
+    });
+
 });

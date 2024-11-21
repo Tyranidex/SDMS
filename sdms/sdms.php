@@ -24,6 +24,7 @@ require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-admin.php';
 require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-frontend.php';
 require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-custom-fields.php';
 require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-settings.php';
+require_once SDMS_PLUGIN_DIR . 'includes/class-sdms-access-control.php';
 require_once SDMS_PLUGIN_DIR . 'includes/sdms-functions.php';
 
 // Initialize plugin classes
@@ -33,6 +34,7 @@ function sdms_init() {
     new SDMS_Custom_Fields();
     new SDMS_Settings();
     new SDMS_Frontend();
+    new SDMS_Access_Control();
 }
 add_action( 'plugins_loaded', 'sdms_init' );
 
@@ -90,3 +92,15 @@ function sdms_deactivate() {
     flush_rewrite_rules();
 }
 register_deactivation_hook( __FILE__, 'sdms_deactivate' );
+
+function sdms_block_admin_access_for_custom_roles() {
+    if ( ! defined( 'DOING_AJAX' ) || ! DOING_AJAX ) {
+        $user = wp_get_current_user();
+        $sdms_roles = get_option( 'sdms_user_roles', array() );
+        if ( ! empty( $sdms_roles ) && array_intersect( $user->roles, array_keys( $sdms_roles ) ) ) {
+            wp_redirect( home_url() );
+            exit;
+        }
+    }
+}
+add_action( 'admin_init', 'sdms_block_admin_access_for_custom_roles' );

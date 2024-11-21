@@ -36,6 +36,9 @@ class SDMS_Frontend {
 
         // Include the modal in the footer
         add_action( 'wp_footer', array( $this, 'include_send_document_modal' ) );
+
+        // Check access when viewing single documents
+        add_action( 'template_redirect', array( $this, 'check_single_document_access' ) );
     }
 
     /**
@@ -225,6 +228,17 @@ class SDMS_Frontend {
             // Find the post based on the path
             $post = $this->get_post_by_path( $path );
             if ( $post ) {
+                // Access control check
+                if ( ! sdms_user_can_view( $post->ID ) ) {
+                    if ( ! is_user_logged_in() ) {
+                        // Redirect non-logged-in users to login page
+                        auth_redirect();
+                    } else {
+                        // Display 'not authorized' message
+                        wp_die( __( 'You do not have permission to download this file.', 'sdms' ), 403 );
+                    }
+                }
+
                 if ( empty( $language ) ) {
                     // If language is not specified, get the default or fallback language
                     $language = sdms_get_default_language( $post->ID );
@@ -393,4 +407,25 @@ class SDMS_Frontend {
             wp_send_json_error( array( 'message' => __( 'Failed to send email. Please try again later.', 'sdms' ) ) );
         }
     }
+
+    /**
+     * Check access when viewing single documents.
+     */
+    public function check_single_document_access() {
+        if ( is_singular( 'sdms_document' ) ) {
+            $post_id = get_the_ID();
+
+            // Access control check
+            if ( ! sdms_user_can_view( $post_id ) ) {
+                if ( ! is_user_logged_in() ) {
+                    // Redirect non-logged-in users to login page
+                    auth_redirect();
+                } else {
+                    // Display 'not authorized' message
+                    wp_die( __( 'You do not have permission to view this document.', 'sdms' ), 403 );
+                }
+            }
+        }
+    }
 }
+

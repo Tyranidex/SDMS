@@ -178,3 +178,76 @@ function sdms_get_default_language( $post_id ) {
     // Default to 'en' if no files are found
     return 'en';
 }
+
+function sdms_exclude_restricted_documents( $query ) {
+    if ( ! is_admin() && $query->is_main_query() && ( is_post_type_archive( 'sdms_document' ) || is_tax( 'sdms_category' ) ) ) {
+        $restricted_posts = sdms_get_restricted_post_ids();
+
+        if ( ! empty( $restricted_posts ) ) {
+            $query->set( 'post__not_in', $restricted_posts );
+        }
+    }
+}
+add_action( 'pre_get_posts', 'sdms_exclude_restricted_documents' );
+
+function sdms_get_restricted_post_ids() {
+    $args = array(
+        'post_type'   => 'sdms_document',
+        'post_status' => 'publish',
+        'meta_query'  => array(
+            'relation' => 'OR',
+            array(
+                'key'     => '_sdms_allowed_roles',
+                'compare' => 'EXISTS',
+            ),
+            array(
+                'key'     => '_sdms_allowed_users',
+                'compare' => 'EXISTS',
+            ),
+        ),
+        'fields'      => 'ids',
+        'nopaging'    => true,
+    );
+
+    $posts = get_posts( $args );
+    $restricted_posts = array();
+
+    foreach ( $posts as $post_id ) {
+        if ( ! sdms_user_can_view( $post_id ) ) {
+            $restricted_posts[] = $post_id;
+        }
+    }
+
+    return $restricted_posts;
+}
+
+function sdms_user_can_view( $post_id ) {
+    $user = wp_get_current_user();
+
+    // Get access settings
+    $allowed_roles = get_post_meta( $post_id, '_sdms_allowed_roles', true );
+    $allowed_users = get_post_meta( $post_id, '_sdms_allowed_users', true );
+
+    // If no restrictions, allow access
+    if ( empty( $allowed_roles ) && empty( $allowed_users ) ) {
+        return true;
+    }
+
+    // Check if user is logged in
+    if ( ! is_user_logged_in() ) {
+        return false;
+    }
+
+    // Check if user is explicitly allowed
+    if ( is_array( $allowed_users ) && in_array( $user->ID, $allowed_users ) ) {
+        return true;
+    }
+
+    // Check if user's role is allowed
+    if ( is_array( $allowed_roles ) && array_intersect( $user->roles, $allowed_roles ) ) {
+        return true;
+    }
+
+    // If user is not allowed
+    return false;
+}

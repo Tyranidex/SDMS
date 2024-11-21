@@ -20,6 +20,8 @@ class SDMS_Admin {
 
         // Save the custom featured image (file type icon)
         add_action( 'save_post', array( $this, 'save_custom_featured_image' ) );
+
+        add_action( 'wp_ajax_sdms_user_search', array( $this, 'handle_user_search_ajax' ) );
     }
 
     /**
@@ -32,14 +34,19 @@ class SDMS_Admin {
         if ( ( 'post.php' === $hook || 'post-new.php' === $hook ) && 'sdms_document' === $post_type || 'settings_page_sdms-settings' === $hook ) {
             wp_enqueue_style( 'sdms-admin-styles', SDMS_PLUGIN_URL . 'assets/css/sdms-admin-styles.css' );
             wp_enqueue_script( 'sdms-admin-script', SDMS_PLUGIN_URL . 'assets/js/sdms-admin-script.js', array( 'jquery', 'wp-mediaelement' ), '1.0.0', true );
+            wp_enqueue_script( 'jquery-ui-autocomplete' );
 
             // Localize script with necessary data
             wp_localize_script( 'sdms-admin-script', 'sdmsAdmin', array(
+                'ajax_url'             => admin_url( 'admin-ajax.php' ),
+                'user_search_nonce'    => wp_create_nonce( 'sdms_user_search_nonce' ),
                 'title'                => __( 'Choose Icon', 'sdms' ),
                 'button'               => __( 'Use this icon', 'sdms' ),
                 'remove_label'         => __( 'Remove', 'sdms' ),
                 'reset_label'          => __( 'Reset', 'sdms' ),
                 'add_language_alert'   => __( 'Please select a language to add.', 'sdms' ),
+                'add_role_alert'       => __( 'Please enter both role slug and role name.', 'sdms' ),
+                'role_exists_alert'    => __( 'A role with this slug already exists.', 'sdms' ),
                 'available_languages'  => $this->get_available_languages(),
                 'default_icons'        => $this->get_default_file_type_icons(),
             ) );
@@ -162,4 +169,28 @@ class SDMS_Admin {
         }
         return $icons;
     }
+
+    public function handle_user_search_ajax() {
+        check_ajax_referer( 'sdms_user_search_nonce', 'nonce' );
+
+        $search_term = isset( $_GET['term'] ) ? sanitize_text_field( $_GET['term'] ) : '';
+
+        $users = get_users( array(
+            'search'         => '*' . esc_attr( $search_term ) . '*',
+            'search_columns' => array( 'user_login', 'user_nicename', 'user_email', 'display_name' ),
+            'number'         => 10,
+        ) );
+
+        $results = array();
+        foreach ( $users as $user ) {
+            $results[] = array(
+                'id'   => $user->ID,
+                'label'=> $user->display_name . ' (' . $user->user_email . ')',
+                'value'=> $user->display_name . ' (' . $user->user_email . ')',
+            );
+        }
+
+        wp_send_json( $results );
+    }
+
 }

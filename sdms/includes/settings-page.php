@@ -23,6 +23,9 @@ if ( ! defined( 'ABSPATH' ) ) {
             $languages = array();
         }
 
+        // Get existing user roles
+        $sdms_user_roles = get_option( 'sdms_user_roles', array() );
+
         // Get available languages from JSON file
         $available_languages = sdms_get_available_languages();
 
@@ -107,6 +110,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             <a href="#tab-languages" class="nav-tab nav-tab-active"><?php esc_html_e( 'Languages', 'sdms' ); ?></a>
             <a href="#tab-icons" class="nav-tab"><?php esc_html_e( 'Icons', 'sdms' ); ?></a>
             <a href="#tab-templates" class="nav-tab"><?php esc_html_e( 'Templates', 'sdms' ); ?></a>
+            <a href="#tab-user-roles" class="nav-tab"><?php esc_html_e( 'User Roles', 'sdms' ); ?></a>
         </h2>
 
         <!-- Languages Tab Content -->
@@ -297,6 +301,40 @@ if ( ! defined( 'ABSPATH' ) ) {
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <!-- User Roles Tab Content -->
+        <div id="tab-user-roles" class="tab-content" style="display: none;">
+            <h2><?php esc_html_e( 'User Roles', 'sdms' ); ?></h2>
+            <p><?php esc_html_e( 'Add, edit, or remove custom user roles for document access control.', 'sdms' ); ?></p>
+
+            <table class="wp-list-table widefat fixed striped" id="sdms_user_roles_table">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e( 'Role Slug', 'sdms' ); ?></th>
+                        <th><?php esc_html_e( 'Role Name', 'sdms' ); ?></th>
+                        <th><?php esc_html_e( 'Actions', 'sdms' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    foreach ( $sdms_user_roles as $slug => $name ) {
+                        echo '<tr>';
+                        echo '<td><input type="text" name="sdms_user_roles[' . esc_attr( $slug ) . '][slug]" value="' . esc_attr( $slug ) . '" class="regular-text sdms-role-slug"></td>';
+                        echo '<td><input type="text" name="sdms_user_roles[' . esc_attr( $slug ) . '][name]" value="' . esc_attr( $name ) . '" class="regular-text"></td>';
+                        echo '<td><button type="button" class="button sdms-remove-role" data-role="' . esc_attr( $slug ) . '">' . esc_html__( 'Remove', 'sdms' ) . '</button></td>';
+                        echo '</tr>';
+                    }
+                    ?>
+                </tbody>
+            </table>
+            <h3><?php esc_html_e( 'Add New Role', 'sdms' ); ?></h3>
+            <div class="sdms-add-role">
+                <input type="text" id="sdms_new_role_slug" placeholder="<?php esc_attr_e( 'Role Slug (lowercase, no spaces)', 'sdms' ); ?>" class="regular-text">
+                <input type="text" id="sdms_new_role_name" placeholder="<?php esc_attr_e( 'Role Name', 'sdms' ); ?>" class="regular-text">
+                <button type="button" class="button" id="sdms_add_role"><?php esc_html_e( 'Add Role', 'sdms' ); ?></button>
+            </div>
+            <p class="description"><?php esc_html_e( 'Note: Changing the slug of an existing role will update all documents and users associated with that role.', 'sdms' ); ?></p>
         </div>
 
         <?php submit_button(); ?>
