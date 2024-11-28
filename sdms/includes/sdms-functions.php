@@ -180,7 +180,7 @@ function sdms_get_default_language( $post_id ) {
 }
 
 function sdms_exclude_restricted_documents( $query ) {
-    if ( ! is_admin() && $query->is_main_query() && ( is_post_type_archive( 'sdms_document' ) || is_tax( 'sdms_category' ) ) ) {
+    if ( ! is_admin() && $query->is_main_query() && ( is_post_type_archive( 'sdms_document' ) || is_tax( 'sdms_category' ) || ( $query->is_search() && $query->get( 'post_type' ) == 'sdms_document' ) ) ) {
         $restricted_posts = sdms_get_restricted_post_ids();
 
         if ( ! empty( $restricted_posts ) ) {
@@ -221,33 +221,55 @@ function sdms_get_restricted_post_ids() {
     return $restricted_posts;
 }
 
+/**
+ * Vérifie si l'utilisateur peut voir le document.
+ *
+ * @param int $post_id L'ID du document.
+ * @return bool
+ */
 function sdms_user_can_view( $post_id ) {
     $user = wp_get_current_user();
+
+    // Les administrateurs et les éditeurs peuvent voir tous les documents
+    if ( in_array( 'administrator', $user->roles ) || in_array( 'editor', $user->roles ) ) {
+        return true;
+    }
 
     // Get access settings
     $allowed_roles = get_post_meta( $post_id, '_sdms_allowed_roles', true );
     $allowed_users = get_post_meta( $post_id, '_sdms_allowed_users', true );
 
-    // If no restrictions, allow access
+    // Si aucune restriction, accès autorisé
     if ( empty( $allowed_roles ) && empty( $allowed_users ) ) {
         return true;
     }
 
-    // Check if user is logged in
+    // Vérifie si l'utilisateur est connecté
     if ( ! is_user_logged_in() ) {
         return false;
     }
 
-    // Check if user is explicitly allowed
+    // Vérifie si l'utilisateur est explicitement autorisé
     if ( is_array( $allowed_users ) && in_array( $user->ID, $allowed_users ) ) {
         return true;
     }
 
-    // Check if user's role is allowed
+    // Vérifie si le rôle de l'utilisateur est autorisé
     if ( is_array( $allowed_roles ) && array_intersect( $user->roles, $allowed_roles ) ) {
         return true;
     }
 
-    // If user is not allowed
+    // Accès refusé
     return false;
 }
+
+function sdms_modify_search_query( $query ) {
+    if ( $query->is_search() && ! is_admin() && $query->is_main_query() ) {
+        // Vérifier si le post_type est déjà défini
+        $post_type = $query->get( 'post_type' );
+        if ( ! $post_type ) {
+            $query->set( 'post_type', 'sdms_document' );
+        }
+    }
+}
+add_action( 'pre_get_posts', 'sdms_modify_search_query' );

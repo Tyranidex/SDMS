@@ -34,10 +34,10 @@ jQuery(document).ready(function($) {
         var postId = $('#sdms-post-id').val();
         var senderName = $('#sdms-sender-name').val();
         var recipientEmail = $('#sdms-recipient-email').val();
-        var nonce = sdmsAjax.nonce;
+        var nonce = sdmsAjaxModal.nonce;
 
         $.ajax({
-            url: sdmsAjax.ajax_url,
+            url: sdmsAjaxModal.ajax_url,
             type: 'post',
             data: {
                 action: 'sdms_send_document',

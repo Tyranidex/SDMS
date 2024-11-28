@@ -1,12 +1,12 @@
 <?php
 /**
- * Template Name: Default Taxonomy Template
+ * Template Name: Search Template Default
  *
- * Description: The default template for sdms_category taxonomy archives.
+ * Description: The default template for search results of sdms_document.
  */
 
 add_filter( 'body_class', function( $classes ) {
-    $classes[] = 'sdms-taxonomy-template-default';
+    $classes[] = 'sdms-search-template-default';
     return $classes;
 } );
 
@@ -16,7 +16,7 @@ get_header();
 <div id="primary" class="content-area">
     <main id="main" class="site-main">
 
-        <h1><?php single_term_title(); ?></h1>
+        <h1><?php printf( __( 'Search Results for: %s', 'sdms' ), '<span>' . esc_html( get_search_query() ) . '</span>' ); ?></h1>
 
         <div class="sdms-archive-container">
             <!-- Barre latérale des catégories -->
@@ -26,7 +26,7 @@ get_header();
                     <li><a href="<?php echo esc_url( get_post_type_archive_link( 'sdms_document' ) ); ?>"><?php esc_html_e( 'Afficher tout', 'sdms' ); ?></a></li>
                     <?php
                     $categories = get_terms( array(
-                        'taxonomy' => 'sdms_category',
+                        'taxonomy'   => 'sdms_category',
                         'hide_empty' => true,
                     ) );
 
@@ -46,7 +46,7 @@ get_header();
                 <!-- Formulaire de recherche -->
                 <form id="sdms-search-form" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>">
                     <input type="hidden" name="post_type" value="sdms_document">
-                    <input type="text" id="sdms-search-input" name="s" placeholder="<?php esc_attr_e( 'Rechercher des documents...', 'sdms' ); ?>" value="<?php echo get_search_query(); ?>">
+                    <input type="text" id="sdms-search-input" name="s" placeholder="<?php esc_attr_e( 'Rechercher des documents...', 'sdms' ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>">
                     <button type="submit"><?php esc_html_e( 'Rechercher', 'sdms' ); ?></button>
                 </form>
 
@@ -71,13 +71,11 @@ get_header();
                                             <?php
                                             // Afficher l'icône du type de fichier
                                             $file_type = get_post_meta( get_the_ID(), '_sdms_file_type_image', true );
-                                            $icon_url = sdms_get_file_type_icon_url( $file_type );
+                                            $icon_url  = sdms_get_file_type_icon_url( $file_type );
 
                                             if ( $icon_url ) {
                                                 echo '<img src="' . esc_url( $icon_url ) . '" alt="' . esc_attr( $file_type ) . '" class="sdms-file-type-icon">';
                                             }
-
-                                            // Titre du document avec lien
                                             ?>
                                             <a href="<?php the_permalink(); ?>"><?php the_title(); ?></a>
                                         </td>
@@ -88,7 +86,7 @@ get_header();
                                             if ( $terms && ! is_wp_error( $terms ) ) {
                                                 $categories = array();
                                                 foreach ( $terms as $term ) {
-                                                    $categories[] = '<a href="' . get_term_link( $term ) . '">' . esc_html( $term->name ) . '</a>';
+                                                    $categories[] = '<a href="' . esc_url( get_term_link( $term ) ) . '">' . esc_html( $term->name ) . '</a>';
                                                 }
                                                 echo implode( ', ', $categories );
                                             } else {
@@ -126,6 +124,9 @@ get_header();
         </div>
 
     </main><!-- #main -->
+    <script>
+        alert("ok");
+    </script>
 </div><!-- #primary -->
 
 <?php

@@ -244,3 +244,9 @@
 }
 
 /* ... autres styles de la modale ... */
+#main.site-main .sdms-archive-container{
+    display:flex;
+}
+#main.site-main .sdms-archive-container aside{
+    margin-right:20px;
+}

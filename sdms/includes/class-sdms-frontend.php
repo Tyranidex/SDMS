@@ -11,6 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class SDMS_Frontend {
 
+    private $sdms_is_document_search = false;
+
     public function __construct() {
         // Modify the permalink structure
         add_filter( 'post_type_link', array( $this, 'custom_post_link' ), 10, 2 );
@@ -19,7 +21,7 @@ class SDMS_Frontend {
         add_action( 'init', array( $this, 'add_rewrite_rules' ) );
 
         // Load custom template for the 'sdms_document' post type
-        add_filter( 'template_include', array( $this, 'load_custom_template' ) );
+        add_filter( 'template_include', array( $this, 'load_custom_template' ), 99 );
 
         // Handle file downloads
         add_action( 'wp', array( $this, 'handle_download' ) );
@@ -39,6 +41,8 @@ class SDMS_Frontend {
 
         // Check access when viewing single documents
         add_action( 'template_redirect', array( $this, 'check_single_document_access' ) );
+
+        add_action( 'pre_get_posts', array( $this, 'detect_sdms_document_search' ) );
     }
 
     /**
@@ -47,9 +51,9 @@ class SDMS_Frontend {
      * @param WP_Query $query The main query object.
      */
     public function adjust_sdms_archive_query( $query ) {
-        if ( ! is_admin() && $query->is_main_query() && is_post_type_archive( 'sdms_document' ) ) {
+        if ( ! is_admin() && $query->is_main_query() && ( is_post_type_archive( 'sdms_document' ) || is_tax( 'sdms_category' ) ) ) {
             // Set the number of posts per page
-            $query->set( 'posts_per_page', 20 );
+            $query->set( 'posts_per_page', 40 );
         }
     }
 
@@ -60,11 +64,11 @@ class SDMS_Frontend {
         if ( is_singular( 'sdms_document' ) || is_post_type_archive( 'sdms_document' ) || is_tax( 'sdms_category' ) ) {
             wp_enqueue_style( 'sdms-front-styles', SDMS_PLUGIN_URL . 'assets/css/sdms-front-styles.css', array(), '1.0.0' );
 
-            // Enqueue the script for the modal and AJAX
+            // Enqueue the script for the modal
             wp_enqueue_script( 'sdms-front-script', SDMS_PLUGIN_URL . 'assets/js/sdms-front-script.js', array( 'jquery' ), '1.0.0', true );
 
-            // Localize script to pass AJAX URL and nonce
-            wp_localize_script( 'sdms-front-script', 'sdmsAjax', array(
+            // Localize script to pass AJAX URL and nonce for the modal
+            wp_localize_script( 'sdms-front-script', 'sdmsAjaxModal', array(
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
                 'nonce'    => wp_create_nonce( 'sdms_send_document_nonce' ),
             ) );
@@ -174,15 +178,18 @@ class SDMS_Frontend {
      * @return string Modified template path.
      */
     public function load_custom_template( $template ) {
-        // Retrieve selected templates from options
+        error_log( 'load_custom_template called with template: ' . $template );
+        // Récupère les templates sélectionnés depuis les options
         $selected_single_template   = get_option( 'sdms_template', 'single-template-default.php' );
         $selected_archive_template  = get_option( 'sdms_archive_template', 'archive-template-default.php' );
         $selected_taxonomy_template = get_option( 'sdms_taxonomy_template', 'taxonomy-template-default.php' );
+        $selected_search_template   = 'search-template-default.php'; // Vous pouvez le rendre configurable si nécessaire
 
         // Sanitize filenames
         $selected_single_template   = sanitize_file_name( $selected_single_template );
         $selected_archive_template  = sanitize_file_name( $selected_archive_template );
         $selected_taxonomy_template = sanitize_file_name( $selected_taxonomy_template );
+        $selected_search_template   = sanitize_file_name( $selected_search_template );
 
         // Paths to templates
         $theme_templates_dir = get_stylesheet_directory() . '/sdms-templates/';
@@ -194,6 +201,8 @@ class SDMS_Frontend {
             $template_file = $selected_archive_template;
         } elseif ( is_tax( 'sdms_category' ) ) {
             $template_file = $selected_taxonomy_template;
+        } elseif ( is_search() && $this->sdms_is_document_search ) {
+            $template_file = $selected_search_template;
         } else {
             return $template;
         }
@@ -424,6 +433,15 @@ class SDMS_Frontend {
                     // Display 'not authorized' message
                     wp_die( __( 'You do not have permission to view this document.', 'sdms' ), 403 );
                 }
+            }
+        }
+    }
+
+    public function detect_sdms_document_search( $query ) {
+        if ( $query->is_search() && ! is_admin() && $query->is_main_query() ) {
+            $post_type = $query->get( 'post_type' );
+            if ( $post_type == 'sdms_document' || ( is_array( $post_type ) && in_array( 'sdms_document', $post_type ) ) ) {
+                $this->sdms_is_document_search = true;
             }
         }
     }
